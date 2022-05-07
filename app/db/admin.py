@@ -1,11 +1,6 @@
 from django.contrib import admin
 
-from .models import Model, ModelSchema
-
-
-@admin.register(Model)
-class ModelAdmin(admin.ModelAdmin):
-    pass
+from .models import ModelSchema
 
 
 @admin.register(ModelSchema)

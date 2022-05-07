@@ -2,11 +2,11 @@ from uuid import uuid4
 
 from django.db.models import UUIDField
 
-from .apps import ModelsConfig
+from .apps import DBConfig
 
 
 def dynamic_models_app_label():
-    return ModelsConfig.name
+    return DBConfig.name
 
 
 def default_fields():

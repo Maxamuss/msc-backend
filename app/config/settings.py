@@ -44,8 +44,8 @@ INSTALLED_APPS = [
     # Local
     'api',
     'core',
+    'db',
     'accounts',
-    'models',
     'functions',
     'packages',
     'layout',

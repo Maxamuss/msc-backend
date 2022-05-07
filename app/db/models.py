@@ -11,6 +11,11 @@ from .utils import ModelRegistry
 
 
 class ModelSchema(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+        ]
+
     name = models.CharField(max_length=32, unique=True)
 
     def __init__(self, *args, **kwargs):
@@ -19,6 +24,9 @@ class ModelSchema(models.Model):
         self._initial_name = self.name
         initial_model = self.get_registered_model()
         self._schema_editor = ModelSchemaEditor(initial_model)
+
+    def __str__(self):
+        return self.name
 
     def save(self, **kwargs):
         super().save(**kwargs)
@@ -180,16 +188,3 @@ class FieldSchema(models.Model):
         except FieldDoesNotExist:
             field = None
         return model, field
-
-
-class Model(BaseModel):
-    class Meta:
-        indexes = [
-            models.Index(fields=['model_name']),
-        ]
-
-    model_name = models.CharField(max_length=255)
-    model_schema = models.OneToOneField(ModelSchema, on_delete=models.CASCADE, null=True)
-
-    def __str__(self):
-        return self.model_name

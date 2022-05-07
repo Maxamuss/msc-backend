@@ -14,10 +14,10 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
+from db.models import ModelSchema
+from db.serializer import ModelSerializer
 from functions.models import Function
 from layout.utils import get_page_layout
-from models.models import Model
-from models.serializer import ModelSerializer
 from packages.models import Package
 from .pagination import DataPagination
 from .utils import find_component
@@ -193,7 +193,7 @@ class DataAPIView(APIView):
             raise Exception()
 
         model_obj = (
-            Model.objects.filter(model_name__iexact=model_name)
+            ModelSchema.objects.filter(name__iexact=model_name)
             .select_related('model_schema')
             .first()
         )
@@ -383,12 +383,12 @@ class DeveloperBaseAPIView(APIView):
             return {}
 
 
-class ModelAPIView(DeveloperBaseAPIView):
+class ModelSchemaAPIView(DeveloperBaseAPIView):
     """
     API responsible for managing the models of the application.
     """
 
-    model = Model
+    model = ModelSchema
     serializer_class = ModelSerializer
 
     def update(self, request, *args, **kwargs):

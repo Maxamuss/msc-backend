@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from layout.models import Page
 from .constants import MODEL_DEFAULT_PAGES
-from .models import FieldSchema, Model, ModelSchema
+from .models import FieldSchema, ModelSchema
 
 
 class ModelFieldSerializer(serializers.Serializer):
