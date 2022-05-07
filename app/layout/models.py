@@ -12,6 +12,9 @@ class Page(BaseModel):
     page_name = models.CharField(max_length=255)
     layout = models.JSONField(default=list)
 
+    def __str__(self):
+        return self.page_name
+
 
 class Navigation(BaseModel):
     """
@@ -19,6 +22,9 @@ class Navigation(BaseModel):
     """
 
     layout = models.JSONField(default=dict)
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Style(BaseModel):
@@ -30,3 +36,6 @@ class Style(BaseModel):
     application_favicon = models.ImageField()
     primary_color = models.CharField(max_length=7)
     secondary_color = models.CharField(max_length=7)
+
+    def __str__(self):
+        return str(self.id)
