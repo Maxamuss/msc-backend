@@ -212,14 +212,14 @@ class DataAPIView(APIView):
     # HTTP methods
     # ---------------------------------------------------------------------------------------------
 
-    def get(self, request, *args, **kwargs):
+    def get(self, *args, **kwargs):
         self.method_setup()
 
         if self.model_id and not self.filter_model_name:
             return self.detail()
         return self.list()
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         self.method_setup()
 
         if not self.model_id and not self.filter_model_name:
@@ -227,7 +227,7 @@ class DataAPIView(APIView):
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, *args, **kwargs):
+    def put(self, *args, **kwargs):
         self.method_setup()
 
         if self.model_id and not self.filter_model_name:
@@ -235,8 +235,16 @@ class DataAPIView(APIView):
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def patch(self, request, *args, **kwargs):
-        return self.put(request, *args, **kwargs)
+    def patch(self, *args, **kwargs):
+        return self.put(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.method_setup()
+
+        if self.model_id and not self.filter_model_name:
+            return self.destroy()
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     # ---------------------------------------------------------------------------------------------
     # Views
@@ -273,6 +281,11 @@ class DataAPIView(APIView):
             resource._prefetched_objects_cache = {}
 
         return Response(serializer.data)
+
+    def destroy(self):
+        resource = get_object_or_404(self.get_queryset(), id=self.model_id)
+        resource.delete()
+        return Response()
 
     # ---------------------------------------------------------------------------------------------
     # Util methods

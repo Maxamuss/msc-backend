@@ -1,3 +1,5 @@
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from core.models import BaseModel
@@ -8,7 +10,17 @@ class Page(BaseModel):
     Model to store the layout of a page for a given model.
     """
 
-    model = models.ForeignKey('db.ModelSchema', on_delete=models.CASCADE, related_name='pages')
+    class Meta:
+        indexes = [
+            models.Index(fields=["content_type", "object_id"]),
+        ]
+
+    # model = models.ForeignKey('db.ModelSchema', on_delete=models.CASCADE, related_name='pages')
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
     page_name = models.CharField(max_length=255)
     layout = models.JSONField(default=list)
 
