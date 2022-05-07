@@ -168,13 +168,12 @@ CORS_ALLOWED_ORIGINS = [
 # Django Dynamic Models
 
 from uuid import uuid4
+
 from django.db.models import UUIDField
 
 DYNAMIC_MODELS = {
     # 'DEFAULT_CHARFIELD_MAX_LENGTH': 255,
     # 'USE_APP_LABEL': 'dynamic_models',
     # 'CACHE_KEY_PREFIX': 'dynamic_models_',
-    'DEFAULT_FIELDS': {
-        'id': UUIDField(primary_key=True, default=uuid4, editable=False)
-    },
+    'DEFAULT_FIELDS': {'id': UUIDField(primary_key=True, default=uuid4, editable=False)},
 }

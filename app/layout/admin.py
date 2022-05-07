@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Page, Navigation, Style
+from .models import Navigation, Page, Style
 
 
 @admin.register(Page)

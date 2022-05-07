@@ -1,27 +1,26 @@
-from functools import cached_property
 import json
 import re
+from functools import cached_property
 from typing import List, Optional, Tuple, Union
 
-from django.shortcuts import get_object_or_404
-from django.contrib.contenttypes.models import ContentType
 from django.apps import apps
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model as DjangoModel
+from django.shortcuts import get_object_or_404
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import serializers
+from rest_framework import serializers, status
 from rest_framework.exceptions import ParseError
-from rest_framework import status
+from rest_framework.response import Response
 from rest_framework.settings import api_settings
+from rest_framework.views import APIView
 
-from models.models import Model
 from functions.models import Function
+from layout.utils import get_page_layout
+from models.models import Model
+from models.serializer import ModelSerializer
 from packages.models import Package
 from .pagination import DataPagination
-from models.serializer import ModelSerializer
 from .utils import find_component
-from layout.utils import get_page_layout
 
 
 class LayoutAPIView(APIView):
@@ -57,9 +56,7 @@ class LayoutAPIView(APIView):
                 with open(f'layout/layouts/skeleton.json') as f:
                     layout = json.loads(f.read())
             except FileNotFoundError:
-                return Response(
-                    {'detail': 'File not found.'}, status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({'detail': 'File not found.'}, status=status.HTTP_400_BAD_REQUEST)
 
             if resource_type != 'all':
                 layout = layout.get(resource_type)
@@ -270,9 +267,7 @@ class DataAPIView(APIView):
     def update(self):
         partial = self.request.method.lower() == 'patch'
         resource = get_object_or_404(self.get_queryset(), id=self.model_id)
-        serializer = self.get_serializer(
-            resource, data=self.request.data, partial=partial
-        )
+        serializer = self.get_serializer(resource, data=self.request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -302,9 +297,7 @@ class DataAPIView(APIView):
         query = {}
 
         if self.filter_model_name:
-            if self.filter_model_name in [
-                field.name for field in self.model._meta.get_fields()
-            ]:
+            if self.filter_model_name in [field.name for field in self.model._meta.get_fields()]:
                 query[self.filter_model_name] = self.model_id
 
         return queryset.filter(**query)
@@ -333,8 +326,7 @@ class DataAPIView(APIView):
 
                 if component:
                     fields = [
-                        x.get('field_name')
-                        for x in component.get('config', {}).get('fields', [])
+                        x.get('field_name') for x in component.get('config', {}).get('fields', [])
                     ]
 
                     if 'id' not in fields:
@@ -382,9 +374,7 @@ class DeveloperBaseAPIView(APIView):
         serializer.save()
 
         headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_success_headers(self, data):
         try:

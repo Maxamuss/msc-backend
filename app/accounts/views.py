@@ -1,9 +1,9 @@
-from rest_framework.generics import GenericAPIView
-from rest_framework import status
-from rest_framework.response import Response
 from django.contrib.auth import authenticate, login
-from rest_framework import serializers
+
+from rest_framework import serializers, status
 from rest_framework.authtoken.models import Token
+from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
 
 
 class LoginSerializer(serializers.Serializer):

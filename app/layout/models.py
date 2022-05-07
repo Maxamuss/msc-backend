@@ -8,9 +8,7 @@ class Page(BaseModel):
     Model to store the layout of a page for a given model.
     """
 
-    model = models.ForeignKey(
-        'models.Model', on_delete=models.CASCADE, related_name='pages'
-    )
+    model = models.ForeignKey('models.Model', on_delete=models.CASCADE, related_name='pages')
     page_name = models.CharField(max_length=255)
     layout = models.JSONField(default=list)
 

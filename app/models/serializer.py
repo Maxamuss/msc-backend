@@ -1,10 +1,9 @@
+from dynamic_models.models import FieldSchema, ModelSchema
 from rest_framework import serializers
 
-from dynamic_models.models import ModelSchema, FieldSchema
-
 from layout.models import Page
-from .models import Model
 from .constants import MODEL_DEFAULT_PAGES
+from .models import Model
 
 
 class ModelFieldSerializer(serializers.Serializer):
@@ -50,9 +49,7 @@ class ModelSerializer(serializers.Serializer):
             )
 
             for page_name, definition in MODEL_DEFAULT_PAGES.items():
-                Page.objects.create(
-                    model=model, page_name=page_name, definition=definition
-                )
+                Page.objects.create(model=model, page_name=page_name, definition=definition)
 
         return model_schema
 
