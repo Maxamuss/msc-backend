@@ -1,19 +1,24 @@
 from django.db import models
-
-import pytest
+from django.test import TestCase
 
 from ..factory import FieldFactory, ModelFactory
 from ..models import FieldSchema
-from ..utils import receiver_is_connected
+from . import fixtures
+from .utils import receiver_is_connected
 
 
-class TestModelFactory:
-    def schema_checker_is_connected(self, model):
+class TestModelFactory(TestCase):
+    def schema_checker_is_connected(self):
+        model = fixtures.model_schema().as_model()
+
         return receiver_is_connected(
             "dynamic_models.factory.check_model_schema", models.signals.pre_save, model
         )
 
-    def test_get_model_makes_if_not_exists(self, model_registry, model_schema):
+    def test_get_model_makes_if_not_exists(self):
+        model_schema = fixtures.model_schema()
+        model_registry = fixtures.model_registry(model_schema)
+
         model_registry.unregister_model(model_schema.model_name)
         assert not model_registry.is_registered(model_schema.model_name)
         ModelFactory(model_schema).get_model()
@@ -65,45 +70,50 @@ class TestModelFactory:
         assert not model_registry.is_registered(model_schema.model_name)
 
 
-class TestFieldFactory:
-    @pytest.mark.parametrize(
-        "class_name, expected_class, options",
-        [
-            ("django.db.models.IntegerField", models.IntegerField, {}),
-            ("django.db.models.CharField", models.CharField, {"max_length": 255}),
-            ("django.db.models.TextField", models.TextField, {}),
-            ("django.db.models.FloatField", models.FloatField, {}),
-            ("django.db.models.BooleanField", models.BooleanField, {}),
-        ],
-    )
-    def test_make_field(self, class_name, expected_class, options, model_schema):
-        field_schema = FieldSchema(
-            name="field", class_name=class_name, model_schema=model_schema, kwargs=options
-        )
-        field = FieldFactory(field_schema).make_field()
-        assert isinstance(field, expected_class)
+class TestFieldFactory(TestCase):
+    def test_make_field(self):
+        test_data = [
+            ('django.db.models.IntegerField', models.IntegerField, {}),
+            ('django.db.models.CharField', models.CharField, {'max_length': 255}),
+            ('django.db.models.TextField', models.TextField, {}),
+            ('django.db.models.FloatField', models.FloatField, {}),
+            ('django.db.models.BooleanField', models.BooleanField, {}),
+        ]
+        model_schema = fixtures.model_schema()
 
-    def test_options_are_passed_to_field(self, model_schema, field_schema):
+        for i, (class_name, expected_class, options) in enumerate(test_data):
+            field_schema = FieldSchema(
+                name=f'field{i}', class_name=class_name, model_schema=model_schema, kwargs=options
+            )
+            field = FieldFactory(field_schema).make_field()
+            assert isinstance(field, expected_class)
+
+    def test_options_are_passed_to_field(self):
+        field_schema = fixtures.field_schema()
+
         field_schema.null = True
         field = FieldFactory(field_schema).make_field()
         assert field.null is True
 
-    @pytest.mark.parametrize(
-        "class_name, expected_class, options",
-        [
-            ("django.db.models.ForeignKey", models.ForeignKey, {"on_delete": models.CASCADE}),
-            ("django.db.models.ManyToManyField", models.ManyToManyField, {"blank": True}),
-        ],
-    )
-    def test_table_relationship(
-        self, class_name, expected_class, options, model_schema, another_model_schema
-    ):
-        field_schema = FieldSchema(
-            name="field",
-            class_name=class_name,
-            model_schema=model_schema,
-            kwargs={**options, "to": another_model_schema},
-        )
-        field_schema.null = True
-        field = FieldFactory(field_schema).make_field()
-        assert field.null is True
+    def test_table_relationship(self):
+        test_data = [
+            ('django.db.models.ForeignKey', models.ForeignKey, {'on_delete': models.CASCADE}),
+            ('django.db.models.ManyToManyField', models.ManyToManyField, {'blank': True}),
+        ]
+
+        model_schema = fixtures.model_schema()
+        another_model_schema = fixtures.another_model_schema()
+
+        for i, (class_name, expected_class, options) in enumerate(test_data):
+            field_schema = FieldSchema(
+                name=f'field{i}',
+                class_name=class_name,
+                model_schema=model_schema,
+                kwargs={**options, "to": another_model_schema},
+            )
+            field = FieldFactory(field_schema).make_field()
+            assert isinstance(field, expected_class)
+
+            field_schema.null = True
+            field = FieldFactory(field_schema).make_field()
+            assert field.null is True

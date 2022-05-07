@@ -192,13 +192,12 @@ class DataAPIView(APIView):
         if not model_name:
             raise Exception()
 
-        model_obj = (
-            ModelSchema.objects.filter(name__iexact=model_name)
-            .select_related('model_schema')
-            .first()
-        )
+        model_schema = ModelSchema.objects.filter(name__iexact=model_name).first()
 
-        if model_obj is None:
+        if model_schema is not None:
+            model = model_schema.as_model()
+            self.environment = 'user'
+        else:
             model_obj = ContentType.objects.filter(model=model_name).first()
 
             if model_obj is None:
@@ -206,9 +205,6 @@ class DataAPIView(APIView):
 
             model = apps.get_model(model_obj.app_label, model_name)
             self.environment = 'developer'
-        else:
-            model = model_obj.model_schema.as_model()
-            self.environment = 'user'
 
         return model
 

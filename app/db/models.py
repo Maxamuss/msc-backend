@@ -4,6 +4,7 @@ from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.db import models
 from django.utils.text import slugify
 
+from core.models import BaseModel
 from . import cache, config
 from .exceptions import InvalidFieldNameError, NullFieldChangedError
 from .factory import ModelFactory
@@ -11,13 +12,12 @@ from .schema import FieldSchemaEditor, ModelSchemaEditor
 from .utils import ModelRegistry
 
 
-class ModelSchema(models.Model):
+class ModelSchema(BaseModel):
     class Meta:
         indexes = [
             models.Index(fields=['name']),
         ]
 
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=32, unique=True)
 
     def __init__(self, *args, **kwargs):

@@ -1,15 +1,12 @@
 from django.apps import apps
 from django.core.cache import cache
 
-import pytest
-
 from ..models import FieldSchema, ModelSchema
 from ..utils import ModelRegistry
 
 TEST_APP_LABEL = 'db'
 
 
-@pytest.fixture(autouse=True)
 def cleanup_cache():
     try:
         yield
@@ -17,7 +14,6 @@ def cleanup_cache():
         cache.clear()
 
 
-@pytest.fixture(autouse=True)
 def cleanup_registry():
     """
     The app registry bleeds between tests. This fixture removes all dynamically
@@ -31,28 +27,25 @@ def cleanup_registry():
         apps.register_model(TEST_APP_LABEL, FieldSchema)
 
 
-@pytest.fixture
 def model_registry(model_schema):
     return ModelRegistry(model_schema.app_label)
 
 
-@pytest.fixture
-def unsaved_model_schema(db):
+def unsaved_model_schema():
     return ModelSchema(name='unsaved model')
 
 
-@pytest.fixture
-def model_schema(db):
-    return ModelSchema.objects.create(name='simple model')
+def model_schema():
+    return ModelSchema.objects.get_or_create(name='simple model')[0]
 
 
-@pytest.fixture
-def another_model_schema(db):
-    return ModelSchema.objects.create(name='another model')
+def another_model_schema():
+    return ModelSchema.objects.get_or_create(name='another model')[0]
 
 
-@pytest.fixture
-def field_schema(db, model_schema):
+def field_schema(model_schema_=None):
+    model_schema_ = model_schema_ or model_schema()
+
     return FieldSchema.objects.create(
-        name='field', class_name='django.db.models.IntegerField', model_schema=model_schema
+        name='field', class_name='django.db.models.IntegerField', model_schema=model_schema_
     )
