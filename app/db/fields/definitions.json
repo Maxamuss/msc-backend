@@ -1,0 +1,249 @@
+{
+    "version": "alpha v1.0.0",
+    "core_required_arguments": {
+        "verbose_name": {
+            "label": "Field Name",
+            "description": "Name of field",
+            "type": "text",
+            "default": null
+        }
+    },
+    "core_optional_arguments": {
+        "required": {
+            "label": "Required",
+            "description": "Field must always be populated",
+            "type": "boolean",
+            "default": false
+        },
+        "help_text": {
+            "label": "Help Text",
+            "description": "Text to describe this field",
+            "type": "text",
+            "default": ""
+        },
+        "unique": {
+            "label": "Unique",
+            "description": "...",
+            "type": "boolean",
+            "default": false
+        },
+        "choices": {
+            "label": "Choices",
+            "description": "Limit the value the field can take",
+            "type": "list",
+            "default": null
+        }
+    },
+    "fields": {
+        "text": {
+            "model_field": "django.db.models.TextField",
+            "required_arguments": {},
+            "optional_arguments": {
+                "default": {
+                    "label": "Default Value",
+                    "description": "Pre-populated value for field",
+                    "type": "text",
+                    "default": ""
+                },
+            }
+        },
+        "integer": {
+            "model_field": "django.db.models.BigIntegerField",
+            "required_arguments": {},
+            "optional_arguments": {
+                "default": {
+                    "label": "Default Value",
+                    "description": "Pre-populated value for field",
+                    "type": "integer",
+                    "default": null
+                }
+            }
+        },
+        "float": {
+            "model_field": "django.db.models.FloatField",
+            "required_arguments": {},
+            "optional_arguments": {
+                "default": {
+                    "label": "Default Value",
+                    "description": "Pre-populated value for field",
+                    "type": "float",
+                    "default": null
+                }
+            }
+        },
+        "boolean": {
+            "model_field": "django.db.models.BigIntegerField",
+            "required_arguments": {},
+            "optional_arguments": {
+                "default": {
+                    "label": "Default Value",
+                    "description": "Pre-populated value for field",
+                    "type": "boolean",
+                    "default": null
+                }
+            }
+        },
+        "date": {
+            "model_field": "django.db.models.DateField",
+            "required_arguments": {},
+            "optional_arguments": {
+                "default": {
+                    "label": "Default Value",
+                    "description": "Pre-populated value for field",
+                    "type": "date",
+                    "default": null
+                },
+                "auto_now": {
+                    "label": "Auto Now",
+                    "description": "Date updated whenever the model saved",
+                    "type": "boolean",
+                    "default": false
+                },
+                "auto_now_add": {
+                    "label": "Auto Now Add",
+                    "description": "Date updated when model created",
+                    "type": "boolean",
+                    "default": false
+                },
+                "unique_for_date": {
+                    "label": "Unique For Date",
+                    "description": "Date is unique for the given date",
+                    "type": "boolean",
+                    "default": false
+                },
+                "unique_for_month": {
+                    "label": "Unique For Month",
+                    "description": "Date is unique for the given date's month",
+                    "type": "boolean",
+                    "default": false
+                },
+                "unique_for_year": {
+                    "label": "Unique For Year",
+                    "description": "Date is unique for the given date's year",
+                    "type": "boolean",
+                    "default": false
+                }
+            }
+        },
+        "datetime": {
+            "model_field": "django.db.models.DateTimeField",
+            "required_arguments": {},
+            "optional_arguments": {
+                "default": {
+                    "label": "Default Value",
+                    "description": "Pre-populated value for field",
+                    "type": "datetime",
+                    "default": null
+                },
+                "auto_now": {
+                    "label": "Auto Now",
+                    "description": "Date updated whenever the model saved",
+                    "type": "boolean",
+                    "default": false
+                },
+                "auto_now_add": {
+                    "label": "Auto Now Add",
+                    "description": "Date updated when model created",
+                    "type": "boolean",
+                    "default": false
+                },
+                "unique_for_date": {
+                    "label": "Unique For Date",
+                    "description": "Date is unique for the given date",
+                    "type": "boolean",
+                    "default": false
+                },
+                "unique_for_month": {
+                    "label": "Unique For Month",
+                    "description": "Date is unique for the given date's month",
+                    "type": "boolean",
+                    "default": false
+                },
+                "unique_for_year": {
+                    "label": "Unique For Year",
+                    "description": "Date is unique for the given date's year",
+                    "type": "boolean",
+                    "default": false
+                }
+            }
+        },
+        "time": {
+            "model_field": "django.db.models.TimeField",
+            "required_arguments": {},
+            "optional_arguments": {
+                "default": {
+                    "label": "Default Value",
+                    "description": "Pre-populated value for field",
+                    "type": "time",
+                    "default": null
+                },
+                "auto_now": {
+                    "label": "Auto Now",
+                    "description": "Time updated whenever the model saved",
+                    "type": "boolean",
+                    "default": false
+                },
+                "auto_now_add": {
+                    "label": "Auto Now Add",
+                    "description": "Time updated when model created",
+                    "type": "boolean",
+                    "default": false
+                },
+            }
+        },
+        "email": {
+            "model_field": "django.db.models.EmailField",
+            "required_arguments": {},
+            "optional_arguments": {
+                "default": {
+                    "label": "Default Value",
+                    "description": "Pre-populated value for field",
+                    "type": "email",
+                    "default": ""
+                }
+            }
+        },
+        "file": {
+            "model_field": "django.db.models.FileField",
+            "required_arguments": {},
+            "optional_arguments": {
+                "default": {
+                    "label": "Default Value",
+                    "description": "Pre-populated value for field",
+                    "type": "file",
+                    "default": null
+                }
+            }
+        },
+        "foreign_key": {
+            "model_field": "django.db.models.ForeignKey",
+            "required_arguments": {
+                "model": {
+                    "label": "Model",
+                    "description": "Many-to-one relationship to another model",
+                    "type": "model",
+                    "default": null
+                }
+            },
+            "optional_arguments": {},
+            "excluded_core_argument": [
+                "choices"
+            ]
+        },
+        "many_to_many": {
+            "model_field": "django.db.models.ManyToManyField",
+            "required_arguments": {
+                "model": {
+                    "label": "Model",
+                    "description": "Many-to-one relationship to another model",
+                    "type": "model",
+                    "default": null
+                }
+            },
+            "optional_arguments": {},
+            "excluded_core_argument": [
+                "choices"
+            ]
+        }
+    }
+}

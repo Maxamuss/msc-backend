@@ -121,7 +121,7 @@
                             }
                         },
                         {
-                            "name": "Schema",
+                            "name": "Fields",
                             "content": {
                                 "component": "table",
                                 "config": {

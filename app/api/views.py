@@ -1,7 +1,7 @@
 import json
 import re
 from functools import cached_property
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -15,7 +15,7 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from db.models import ModelSchema
-from db.serializer import ModelSerializer
+from db.serializer import ModelSchemaSerializer
 from functions.models import Function
 from layout.utils import get_page_layout
 from packages.models import Package
@@ -116,6 +116,10 @@ class DataAPIView(APIView):
     for example by the table and form components as they need to now which fields to use in
     serialization.
     """
+
+    overridden_serializers = {
+        ModelSchema: ModelSchemaSerializer,
+    }
 
     def method_setup(self) -> None:
         self.model_name, self.filter_model_name, self.model_id = self.parse_q_args()
@@ -346,7 +350,9 @@ class DataAPIView(APIView):
         return '__all__'
 
     def get_serializer(self, *args, **kwargs):
-        serializer_class = self.generic_serializer(self.model, self.get_fields)
+        serializer_class = self.overridden_serializers.get(
+            self.model, self.generic_serializer(self.model, self.get_fields)
+        )
         kwargs.setdefault(
             'context',
             {'request': self.request, 'format': self.format_kwarg, 'view': self},
@@ -392,32 +398,32 @@ class DeveloperBaseAPIView(APIView):
             return {}
 
 
-class ModelSchemaAPIView(DeveloperBaseAPIView):
-    """
-    API responsible for managing the models of the application.
-    """
+# class ModelSchemaAPIView(DeveloperBaseAPIView):
+#     """
+#     API responsible for managing the models of the application.
+#     """
 
-    model = ModelSchema
-    serializer_class = ModelSerializer
+#     model = ModelSchema
+#     serializer_class = ModelSchemaAPIView
 
-    def update(self, request, *args, **kwargs):
-        pass
+#     def update(self, request, *args, **kwargs):
+#         pass
 
-    def delete(self, request, *args, **kwargs):
-        pass
-
-
-class FunctionAPIView(DeveloperBaseAPIView):
-    """
-    API responsible for managing functions for an application.
-    """
-
-    model = Function
+#     def delete(self, request, *args, **kwargs):
+#         pass
 
 
-class PackageAPIView(DeveloperBaseAPIView):
-    """
-    API responsible for managing packages for an application.
-    """
+# class FunctionAPIView(DeveloperBaseAPIView):
+#     """
+#     API responsible for managing functions for an application.
+#     """
 
-    model = Package
+#     model = Function
+
+
+# class PackageAPIView(DeveloperBaseAPIView):
+#     """
+#     API responsible for managing packages for an application.
+#     """
+
+#     model = Package
