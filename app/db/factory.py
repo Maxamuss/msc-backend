@@ -21,6 +21,7 @@ class ModelFactory:
 
     def make_model(self):
         if not self.schema.pk:
+            # Model has not been saved to db.
             raise UnsavedSchemaError(
                 f"Cannot create a model for schema '{self.schema.name}'"
                 " because it has not been saved to the database"

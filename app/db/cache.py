@@ -12,8 +12,9 @@ def get_last_modified(model_name):
     return cache.get(cache_key(model_name))
 
 
-def update_last_modified(model_name, timeout=config.cache_timeout()):
-    cache.set(cache_key(model_name), timezone.now(), timeout)
+def update_last_modified(model_name, timeout=None):
+    cache_timeout = timeout or config.cache_timeout()
+    cache.set(cache_key(model_name), timezone.now(), cache_timeout)
 
 
 def clear_last_modified(model_name):

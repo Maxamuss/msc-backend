@@ -20,7 +20,7 @@ def default_charfield_max_length():
 
 
 def cache_key_prefix():
-    return 'models_schema_'
+    return 'db_schema_'
 
 
 def cache_timeout():

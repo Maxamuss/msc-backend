@@ -1,8 +1,9 @@
+from uuid import uuid4
+
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.db import models
 from django.utils.text import slugify
 
-from core.models import BaseModel
 from . import cache, config
 from .exceptions import InvalidFieldNameError, NullFieldChangedError
 from .factory import ModelFactory
@@ -16,6 +17,7 @@ class ModelSchema(models.Model):
             models.Index(fields=['name']),
         ]
 
+    # id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=32, unique=True)
 
     def __init__(self, *args, **kwargs):
@@ -84,7 +86,10 @@ class FieldKwargsJSON(models.JSONField):
             raise ValidationError("Invalid value for 'on_delete'") from err
 
     def from_db_value(self, value, expression, connection):
-        db_value = super().from_db_value(value, expression, connection)
+        try:
+            db_value = super().from_db_value(value, expression, connection)
+        except AttributeError:
+            db_value = value
         return self._convert_on_delete_to_function(db_value)
 
     def get_prep_value(self, value):
@@ -121,7 +126,9 @@ class FieldSchema(models.Model):
     kwargs = FieldKwargsJSON(default=dict)
 
     class Meta:
-        unique_together = (("name", "model_schema"),)
+        unique_together = [
+            ('name', 'model_schema'),
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -151,6 +158,7 @@ class FieldSchema(models.Model):
             raise InvalidFieldNameError(f"{self.name} is not a valid field name")
 
     def get_registered_model_field(self):
+        # Return the field on the latest version of the model schema (may not exist if not added).
         latest_model = self.model_schema.get_registered_model()
         if latest_model and self.name:
             try:
@@ -160,7 +168,6 @@ class FieldSchema(models.Model):
 
     @classmethod
     def get_prohibited_names(cls):
-        # TODO: return prohibited names based on backend
         return cls._PROHIBITED_NAMES
 
     @property
@@ -186,5 +193,6 @@ class FieldSchema(models.Model):
         try:
             field = model._meta.get_field(self.db_column)
         except FieldDoesNotExist:
+            # Will not exist if the field has not been added to the model yet.
             field = None
         return model, field
