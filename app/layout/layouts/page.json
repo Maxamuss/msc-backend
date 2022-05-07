@@ -1,0 +1,20 @@
+{
+    "create": {
+        "load_resource": false,
+        "layout": [
+            {
+                "component": "core@page-editor",
+                "config": {}
+            }
+        ]
+    },
+    "edit": {
+        "load_resource": true,
+        "layout": [
+            {
+                "component": "core@page-editor",
+                "config": {}
+            }
+        ]
+    }
+}

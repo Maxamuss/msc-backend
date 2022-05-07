@@ -1,0 +1,19 @@
+{
+    "list": {
+        "load_resource": false,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "Permissions",
+                    "subtitle": "",
+                    "tools": []
+                }
+            },
+            {
+                "component": "core@app-navigation",
+                "config": {}
+            }
+        ]
+    }
+}

@@ -1,0 +1,88 @@
+{
+    "list": {
+        "load_resource": true,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "My Packages",
+                    "subtitle": "Packages that you have defined to use in your application.",
+                    "tools": []
+                }
+            },
+            {
+                "component": "table",
+                "config": {
+                    "actions": [],
+                    "filters": [],
+                    "search": {
+                        "enabled": false
+                    },
+                    "fields": [
+                        {
+                            "field_name": "package_name",
+                            "verbose_name": "Package Name",
+                            "sortable": true,
+                            "default_sorting": null
+                        },
+                        {
+                            "field_name": "id",
+                            "verbose_name": "ID",
+                            "sortable": false,
+                            "default_sorting": null
+                        }
+                    ],
+                    "data_uri": "package",
+                    "link_uri": "package:${id}"
+                }
+            },
+            {
+                "component": "header",
+                "config": {
+                    "title": "Standard Packages",
+                    "subtitle": "Packages that are available to all application implementing standard actions.",
+                    "tools": []
+                }
+            },
+            {
+                "component": "table",
+                "config": {
+                    "actions": [],
+                    "filters": [],
+                    "search": {
+                        "enabled": false
+                    },
+                    "fields": [
+                        {
+                            "field_name": "package_name",
+                            "verbose_name": "Package Name",
+                            "sortable": true,
+                            "default_sorting": null
+                        },
+                        {
+                            "field_name": "id",
+                            "verbose_name": "ID",
+                            "sortable": false,
+                            "default_sorting": null
+                        }
+                    ],
+                    "data_uri": "package",
+                    "link_uri": "package:edit(${id})"
+                }
+            }
+        ]
+    },
+    "edit": {
+        "load_resource": true,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "{{ package_name }} {{ id }}",
+                    "subtitle": "",
+                    "tools": []
+                }
+            }
+        ]
+    }
+}

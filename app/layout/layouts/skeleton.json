@@ -1,0 +1,68 @@
+{
+    "colors": {
+        "primary": "#7e22ce",
+        "secondary": "#7e22ce"
+    },
+    "sidebar": [
+        {
+            "section_name": "Data",
+            "links": [
+                {
+                    "name": "Models",
+                    "icon": "CubeTransparentIcon",
+                    "uri": "model:list"
+                },
+                {
+                    "name": "Functions",
+                    "icon": "CodeIcon",
+                    "uri": "function:list"
+                },
+                {
+                    "name": "Packages",
+                    "icon": "CollectionIcon",
+                    "uri": "package:list"
+                }
+            ]
+        },
+        {
+            "section_name": "Interface",
+            "links": [
+                {
+                    "name": "Navigation",
+                    "icon": "CursorClickIcon",
+                    "uri": "navigation:list"
+                },
+                {
+                    "name": "Styles",
+                    "icon": "ColorSwatchIcon",
+                    "uri": "styles:list"
+                }
+            ]
+        },
+        {
+            "section_name": "Administration",
+            "links": [
+                {
+                    "name": "Users",
+                    "icon": "UsersIcon",
+                    "uri": "user:list"
+                },
+                {
+                    "name": "Groups",
+                    "icon": "UserGroupIcon",
+                    "uri": "group:list"
+                },
+                {
+                    "name": "Permissions",
+                    "icon": "FingerPrintIcon",
+                    "uri": "permission:list"
+                },
+                {
+                    "name": "Settings",
+                    "icon": "CogIcon",
+                    "uri": "model:list"
+                }
+            ]
+        }
+    ]
+}

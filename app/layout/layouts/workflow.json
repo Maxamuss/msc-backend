@@ -1,0 +1,26 @@
+{
+    "create": {
+        "load_resource": false,
+        "layout": [
+            {
+                "component": "core@workflow-editor",
+                "config": {
+                    "type": "create"
+                }
+            }
+        ]
+    },
+    "edit": {
+        "load_resource": true,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "{{ workflow_name }}",
+                    "subtitle": "",
+                    "tools": []
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "list": {
+        "load_resource": false,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "Application Style",
+                    "subtitle": "",
+                    "tools": []
+                }
+            },
+            {
+                "component": "core@app-styles",
+                "config": {}
+            }
+        ]
+    }
+}

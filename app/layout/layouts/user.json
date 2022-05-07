@@ -1,0 +1,230 @@
+{
+    "list": {
+        "load_resource": false,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "Users",
+                    "subtitle": "",
+                    "tools": [
+                        {
+                            "component": "button",
+                            "config": {
+                                "text": "Add User",
+                                "icon": "ViewGridAddIcon",
+                                "uri": "user:create"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "component": "table",
+                "config": {
+                    "actions": [],
+                    "filters": [],
+                    "search": {
+                        "enabled": true
+                    },
+                    "fields": [
+                        {
+                            "field_name": "username",
+                            "verbose_name": "Username",
+                            "sortable": true,
+                            "default_sorting": null
+                        },
+                        {
+                            "field_name": "first_name",
+                            "verbose_name": "First Name",
+                            "sortable": true,
+                            "default_sorting": null
+                        },
+                        {
+                            "field_name": "last_name",
+                            "verbose_name": "Last Name",
+                            "sortable": true,
+                            "default_sorting": null
+                        },
+                        {
+                            "field_name": "email",
+                            "verbose_name": "Email",
+                            "sortable": true,
+                            "default_sorting": null
+                        }
+                    ],
+                    "data_uri": "user",
+                    "link_uri": "user:edit:${id}"
+                }
+            }
+        ]
+    },
+    "create": {
+        "load_resource": false,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "Add User",
+                    "subtitle": "",
+                    "tools": []
+                }
+            },
+            {
+                "component": "container",
+                "config": {
+                    "children": [
+                        {
+                            "id": "49a25bf4-24ea-448c-b21a-9aa0c2d59d15",
+                            "component": "form",
+                            "config": {
+                                "save_button_text": "Create User",
+                                "action_uri": "user",
+                                "link_uri": "user:edit:${id}",
+                                "field_uri": "create:49a25bf4-24ea-448c-b21a-9aa0c2d59d15",
+                                "fields": [
+                                    {
+                                        "field_name": "username",
+                                        "label": "Username",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": null,
+                                        "placeholder": null,
+                                        "layout": {
+                                            "flex": true,
+                                            "full_width": false
+                                        }
+                                    },
+                                    {
+                                        "field_name": "email",
+                                        "label": "Email",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": null,
+                                        "placeholder": null,
+                                        "layout": {
+                                            "flex": true,
+                                            "full_width": false
+                                        }
+                                    },
+                                    {
+                                        "field_name": "first_name",
+                                        "label": "First Name",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": null,
+                                        "placeholder": null,
+                                        "layout": {
+                                            "flex": true,
+                                            "full_width": false
+                                        }
+                                    },
+                                    {
+                                        "field_name": "last_name",
+                                        "label": "Last Name",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": null,
+                                        "placeholder": null,
+                                        "layout": {
+                                            "flex": true,
+                                            "full_width": false
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "edit": {
+        "load_resource": true,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "Edit User: {{ username }}",
+                    "subtitle": "",
+                    "tools": []
+                }
+            },
+            {
+                "component": "container",
+                "config": {
+                    "children": [
+                        {
+                            "id": "49a25bf4-24ed-448c-b21a-9aa0c2d59d15",
+                            "component": "form",
+                            "config": {
+                                "save_button_text": "Save",
+                                "action_uri": "user",
+                                "link_uri": "user:edit:${id}",
+                                "field_uri": "edit:49a25bf4-24ed-448c-b21a-9aa0c2d59d15",
+                                "fields": [
+                                    {
+                                        "field_name": "username",
+                                        "label": "Username",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": null,
+                                        "placeholder": null,
+                                        "layout": {
+                                            "flex": true,
+                                            "full_width": false
+                                        }
+                                    },
+                                    {
+                                        "field_name": "email",
+                                        "label": "Email",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": null,
+                                        "placeholder": null,
+                                        "layout": {
+                                            "flex": true,
+                                            "full_width": false
+                                        }
+                                    },
+                                    {
+                                        "field_name": "first_name",
+                                        "label": "First Name",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": null,
+                                        "placeholder": null,
+                                        "layout": {
+                                            "flex": true,
+                                            "full_width": false
+                                        }
+                                    },
+                                    {
+                                        "field_name": "last_name",
+                                        "label": "Last Name",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": null,
+                                        "placeholder": null,
+                                        "layout": {
+                                            "flex": true,
+                                            "full_width": false
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

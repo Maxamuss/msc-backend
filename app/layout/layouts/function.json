@@ -1,0 +1,142 @@
+{
+    "list": {
+        "load_resource": false,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "My Functions",
+                    "subtitle": "Function that you have defined to use in your application.",
+                    "tools": [
+                        {
+                            "component": "button",
+                            "config": {
+                                "text": "Add Function",
+                                "icon": "ViewGridAddIcon",
+                                "uri": "function:create"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "component": "table",
+                "config": {
+                    "actions": [],
+                    "filters": [],
+                    "search": {
+                        "enabled": false
+                    },
+                    "fields": [
+                        {
+                            "field_name": "function_name",
+                            "verbose_name": "Function Name",
+                            "sortable": true,
+                            "default_sorting": null
+                        },
+                        {
+                            "field_name": "id",
+                            "verbose_name": "ID",
+                            "sortable": false,
+                            "default_sorting": null
+                        }
+                    ],
+                    "data_uri": "function",
+                    "link_uri": "function:edit:${id}"
+                }
+            },
+            {
+                "component": "header",
+                "config": {
+                    "title": "Standard Functions",
+                    "subtitle": "Function that are available to all application implementing standard actions.",
+                    "tools": []
+                }
+            },
+            {
+                "component": "table",
+                "config": {
+                    "actions": [],
+                    "filters": [],
+                    "search": {
+                        "enabled": false
+                    },
+                    "fields": [
+                        {
+                            "field_name": "function_name",
+                            "verbose_name": "Function Name",
+                            "sortable": true,
+                            "default_sorting": null
+                        },
+                        {
+                            "field_name": "id",
+                            "verbose_name": "ID",
+                            "sortable": false,
+                            "default_sorting": null
+                        }
+                    ],
+                    "data_uri": "function",
+                    "link_uri": "function:edit:${id}"
+                }
+            }
+        ]
+    },
+    "edit": {
+        "load_resource": true,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "{{ function_name }} {{ id }}",
+                    "subtitle": "",
+                    "tools": []
+                }
+            }
+        ]
+    },
+    "create": {
+        "load_resource": false,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "Create Function",
+                    "subtitle": "",
+                    "tools": []
+                }
+            },
+            {
+                "component": "container",
+                "config": {
+                    "children": [
+                        {
+                            "id": "49a25bf4-24ea-448c-b21a-9aa0c2a59c15",
+                            "component": "form",
+                            "config": {
+                                "save_button_text": "Create Function",
+                                "action_uri": "function",
+                                "link_uri": "function:edit:${id}",
+                                "field_uri": "create:49a25bf4-24ea-448c-b21a-9aa0c2a59c15",
+                                "fields": [
+                                    {
+                                        "field_name": "function_name",
+                                        "label": "Function Name",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": null,
+                                        "placeholder": null,
+                                        "layout": {
+                                            "flex": true,
+                                            "full_width": false
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

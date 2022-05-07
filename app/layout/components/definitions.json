@@ -1,0 +1,55 @@
+{
+    "version": "alpha v1.0.0",
+    "components": {
+        "button": {
+            "text": {
+                "required": true,
+                "type": "string",
+                "default": "Button Text",
+                "description": "Text displayed inside button"
+            },
+            "icon": {
+                "required": false,
+                "type": "icon",
+                "default": null,
+                "description": "Icon displayed on left of button text"
+            },
+            "uri": {
+                "required": false,
+                "type": "link-uri",
+                "default": null,
+                "description": "Link to redirect to when clicked"
+            }
+        },
+        "container": {
+            "children": {
+                "required": true,
+                "type": "list > component",
+                "default": [],
+                "description": "List of components to be rendered inside container"
+            }
+        },
+        "header": {
+            "title": {
+                "required": true,
+                "type": "string",
+                "default": "Header title",
+                "description": "Main text"
+            },
+            "icon": {
+                "required": false,
+                "type": "string",
+                "default": "subtitle for header",
+                "description": "Smaller text underneath title"
+            },
+            "tools": {
+                "required": false,
+                "type": "list > button",
+                "default": [
+                    "C[button]"
+                ],
+                "description": "List of Button components to be rendered on the right of text"
+            }
+        }
+    }
+}

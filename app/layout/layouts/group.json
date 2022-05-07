@@ -1,0 +1,15 @@
+{
+    "list": {
+        "load_resource": false,
+        "layout": [
+            {
+                "component": "header",
+                "config": {
+                    "title": "Groups",
+                    "subtitle": "",
+                    "tools": []
+                }
+            }
+        ]
+    }
+}
