@@ -10,7 +10,7 @@
                 {
                     "name": "Models",
                     "icon": "CubeTransparentIcon",
-                    "uri": "model:list"
+                    "uri": "modelschema:list"
                 },
                 {
                     "name": "Functions",

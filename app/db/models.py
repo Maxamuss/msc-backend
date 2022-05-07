@@ -117,7 +117,7 @@ class FieldKwargsJSON(models.JSONField):
         return raw_value
 
 
-class FieldSchema(models.Model):
+class FieldSchema(BaseModel):
     _PROHIBITED_NAMES = ("__module__", "_declared")
 
     name = models.CharField(max_length=63)
