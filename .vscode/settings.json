@@ -1,0 +1,11 @@
+{
+    "python.pythonPath": "env\\Scripts\\python",
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "-S"
+    ],
+    "editor.rulers": [
+        99
+    ],
+    "editor.formatOnSave": true,
+}
