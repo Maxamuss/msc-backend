@@ -1,8 +1,6 @@
 from django.contrib import admin
 
-from dynamic_models.models import ModelSchema
-
-from .models import Model
+from .models import Model, ModelSchema
 
 
 @admin.register(Model)

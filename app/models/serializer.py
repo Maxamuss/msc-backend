@@ -1,9 +1,8 @@
-from dynamic_models.models import FieldSchema, ModelSchema
 from rest_framework import serializers
 
 from layout.models import Page
 from .constants import MODEL_DEFAULT_PAGES
-from .models import Model
+from .models import FieldSchema, Model, ModelSchema
 
 
 class ModelFieldSerializer(serializers.Serializer):
