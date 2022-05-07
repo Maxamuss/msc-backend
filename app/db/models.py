@@ -17,7 +17,7 @@ class ModelSchema(models.Model):
             models.Index(fields=['name']),
         ]
 
-    # id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=32, unique=True)
 
     def __init__(self, *args, **kwargs):
