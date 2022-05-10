@@ -123,13 +123,8 @@
                         {
                             "name": "Fields",
                             "content": {
-                                "component": "table",
+                                "component": "inline",
                                 "config": {
-                                    "actions": [],
-                                    "filters": [],
-                                    "search": {
-                                        "enabled": true
-                                    },
                                     "fields": [
                                         {
                                             "field_name": "name",
@@ -145,7 +140,14 @@
                                         }
                                     ],
                                     "data_uri": "fieldschema@model_schema:${id}",
-                                    "link_uri": "page:edit:${id}"
+                                    "create": {
+                                        "component": "core@model-field-form",
+                                        "config": {}
+                                    },
+                                    "view": {
+                                        "component": "core@model-field-form",
+                                        "config": {}
+                                    }
                                 }
                             }
                         },

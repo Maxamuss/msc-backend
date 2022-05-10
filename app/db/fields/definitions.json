@@ -44,7 +44,7 @@
                     "description": "Pre-populated value for field",
                     "type": "text",
                     "default": ""
-                },
+                }
             }
         },
         "integer": {
@@ -188,7 +188,7 @@
                     "description": "Time updated when model created",
                     "type": "boolean",
                     "default": false
-                },
+                }
             }
         },
         "email": {
