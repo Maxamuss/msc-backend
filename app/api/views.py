@@ -1,7 +1,7 @@
 import json
 import re
 from functools import cached_property
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -31,9 +31,9 @@ class LayoutAPIView(APIView):
 
 
     Path has to be in the format:
-    /layout/{developer|user}/$resource/$resource_type/
+    /layout/?1=${developer|user}:$resource:$resource_type
 
-    - First argument is the environment the user is viewing.
+    - First argument is the environment the user is in (developer or user).
     - Second argument is the resource e.g. a model or page type (function, package)
     - Third argument is the specific resource layout e.g. list, edit, delete, custom_page_name
 
@@ -41,6 +41,18 @@ class LayoutAPIView(APIView):
 
     User layouts are defined for a Model and stored in a corresponding Page table.
     """
+
+    def parse_args(self):
+        args = self.request.GET.get('q', '').split(':')
+
+        # Validate path has correct number of arguments.
+        if len(args) != 3:
+            raise ParseError('Incorrect arguments supplied')
+
+        if args[0] not in ['developer', 'user']:
+            raise ParseError('Incorrect environment argument supplied')
+
+        return args
 
     def get(self, request):
         environment, resource, resource_type = self.parse_args()
@@ -84,18 +96,6 @@ class LayoutAPIView(APIView):
             )
 
         return Response(layout, status=status.HTTP_200_OK)
-
-    def parse_args(self):
-        args = self.request.GET.get('q', '').split(':')
-
-        # Validate path has correct number of arguments.
-        if len(args) != 3:
-            raise ParseError('Incorrect arguments supplied')
-
-        if args[0] not in ['developer', 'user']:
-            raise ParseError('Incorrect environment argument supplied')
-
-        return args
 
 
 class DataAPIView(APIView):

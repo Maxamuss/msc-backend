@@ -140,9 +140,13 @@
                                         }
                                     ],
                                     "data_uri": "fieldschema@model_schema:${id}",
+                                    "action_uri": "fieldschema",
                                     "create": {
                                         "component": "core@model-field-form",
-                                        "config": {}
+                                        "config": {
+                                            "data_uri": "fieldschema@model_schema:${id}",
+                                            "action_uri": "fieldschema"
+                                        }
                                     },
                                     "view": {
                                         "component": "core@model-field-form",

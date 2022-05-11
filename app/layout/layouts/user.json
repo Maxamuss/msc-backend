@@ -149,7 +149,7 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Edit User: {{ username }}",
+                    "title": "Edit User: {{ email }}",
                     "subtitle": "",
                     "tools": []
                 }

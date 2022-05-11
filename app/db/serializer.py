@@ -1,3 +1,5 @@
+from http import server
+
 from django.contrib.contenttypes.models import ContentType
 
 from rest_framework import serializers
@@ -7,8 +9,24 @@ from .constants import MODEL_DEFAULT_PAGES
 from .models import FieldSchema, ModelSchema
 
 
-class FieldSchemaSerializer(serializers.Serializer):
-    pass
+class FieldSchemaSerializer(serializers.ModelSerializer):
+    field_type = serializers.CharField(required=True)
+
+    class Meta:
+        model = FieldSchema
+        fields = ['id', 'name', 'model_schema']
+
+    def create(self, validated_data):
+        class_name = 'django.db.models.TextField'
+        # if validated_data['field_type'] == 'text':
+
+        field_schema = FieldSchema.objects.create(
+            name=validated_data['name'],
+            model_schema=validated_data['model_schema'],
+            class_name=class_name,
+        )
+
+        return field_schema
 
 
 class ModelSchemaSerializer(serializers.ModelSerializer):
