@@ -1,0 +1,55 @@
+{
+    "valid": [
+        {
+            "id": "e27ec806-a119-406e-a4ae-0b9837e9a620",
+            "component": "button",
+            "config": {
+                "text": "text",
+                "uri": "modelschema:create",
+                "icon": "PlusCircleIcon"
+            }
+        },
+        {
+            "component": "button",
+            "config": {
+                "text": "{{ text1 }} some text {{ text2 }}",
+                "uri": "modelschema:create",
+                "icon": null
+            }
+        },
+        {
+            "component": "button",
+            "config": {
+                "text": "{{ text }}",
+                "uri": "modelschema:create",
+                "icon": ""
+            }
+        }
+    ],
+    "invalid": [
+        {
+            "component": "button",
+            "config": {
+                "text": "text",
+                "uri": null,
+                "icon": "PlusCircleIcon"
+            }
+        },
+        {
+            "component": "button",
+            "config": {
+                "text": "",
+                "uri": "modelschema:create",
+                "icon": null
+            }
+        },
+        {
+            "component": "button",
+            "config": {
+                "text": null,
+                "uri": "modelschema:create",
+                "icon": null
+            }
+        }
+    ]
+}

@@ -1,0 +1,80 @@
+{
+    "valid": [
+        {
+            "component": "header",
+            "config": {
+                "title_text": "title",
+                "subtitle_text": "subtitle",
+                "tools": []
+            }
+        },
+        {
+            "component": "header",
+            "config": {
+                "title_text": "{{ text1 }}",
+                "subtitle_text": "{{ text2 }}",
+                "tools": []
+            }
+        },
+        {
+            "component": "header",
+            "config": {
+                "title_text": "{{ text1 }}",
+                "subtitle_text": "{{ text2 }}",
+                "tools": [
+                    {
+                        "component": "button",
+                        "config": {
+                            "text": "text",
+                            "uri": "modelschema:create",
+                            "icon": "PlusCircleIcon"
+                        }
+                    },
+                    {
+                        "component": "button",
+                        "config": {
+                            "text": "{{ button1 }} some text {{ button2 }}",
+                            "uri": "modelschema:create",
+                            "icon": null
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "invalid": [
+        {
+            "component": "header",
+            "config": {
+                "title_text": "",
+                "subtitle_text": "",
+                "tools": []
+            }
+        },
+        {
+            "component": "header",
+            "config": {
+                "title_text": null,
+                "subtitle_text": "{{ text2 }}",
+                "tools": []
+            }
+        },
+        {
+            "component": "header",
+            "config": {
+                "title_text": "{{ text1 }}",
+                "subtitle_text": "{{ text2 }}",
+                "tools": [
+                    {
+                        "component": "button",
+                        "config": {
+                            "text": null,
+                            "uri": "modelschema:create",
+                            "icon": "PlusCircleIcon"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

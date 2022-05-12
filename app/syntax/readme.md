@@ -1,4 +1,4 @@
-# Loader
+# Syntax
 
 This app is responsible for loading an expire applications configuration from a directory of JSON
 files.

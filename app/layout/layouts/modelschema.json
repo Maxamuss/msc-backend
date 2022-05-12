@@ -5,8 +5,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Models",
-                    "subtitle": "",
+                    "title_text": "Models",
+                    "subtitle_text": "{{ subtitle }}",
                     "tools": [
                         {
                             "component": "button",

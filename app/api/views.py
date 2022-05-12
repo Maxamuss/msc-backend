@@ -11,14 +11,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
-from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from db.models import ModelSchema
 from db.serializer import ModelSchemaSerializer
-from functions.models import Function
 from layout.utils import get_page_layout
-from packages.models import Package
 from .pagination import DataPagination
 from .utils import find_component
 
@@ -366,64 +363,3 @@ class DataAPIView(APIView):
                 fields = serializer_fields
 
         return GenericSerializer
-
-
-# -------------------------------------------------------------------------------------------------
-#
-#                                      DEVELOPER API VIEWS
-#
-# -------------------------------------------------------------------------------------------------
-
-
-class DeveloperBaseAPIView(APIView):
-    """
-    Base class for developer API views.
-    """
-
-    def post(self, request, path):
-        return self.create(request)
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    def get_success_headers(self, data):
-        try:
-            return {'Location': str(data[api_settings.URL_FIELD_NAME])}
-        except (TypeError, KeyError):
-            return {}
-
-
-# class ModelSchemaAPIView(DeveloperBaseAPIView):
-#     """
-#     API responsible for managing the models of the application.
-#     """
-
-#     model = ModelSchema
-#     serializer_class = ModelSchemaAPIView
-
-#     def update(self, request, *args, **kwargs):
-#         pass
-
-#     def delete(self, request, *args, **kwargs):
-#         pass
-
-
-# class FunctionAPIView(DeveloperBaseAPIView):
-#     """
-#     API responsible for managing functions for an application.
-#     """
-
-#     model = Function
-
-
-# class PackageAPIView(DeveloperBaseAPIView):
-#     """
-#     API responsible for managing packages for an application.
-#     """
-
-#     model = Package

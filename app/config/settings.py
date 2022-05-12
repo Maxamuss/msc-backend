@@ -46,8 +46,9 @@ INSTALLED_APPS = [
     'db',
     'accounts',
     'functions',
-    'packages',
     'layout',
+    'packages',
+    'syntax',
     'workflows',
 ]
 
