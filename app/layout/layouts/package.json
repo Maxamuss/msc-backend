@@ -1,6 +1,6 @@
 {
     "list": {
-        "load_resource": true,
+        "page_object_fields": [],
         "layout": [
             {
                 "component": "header",
@@ -24,15 +24,9 @@
                             "verbose_name": "Package Name",
                             "sortable": true,
                             "default_sorting": null
-                        },
-                        {
-                            "field_name": "id",
-                            "verbose_name": "ID",
-                            "sortable": false,
-                            "default_sorting": null
                         }
                     ],
-                    "data_uri": "package",
+                    "model": "package",
                     "link_uri": "package:${id}"
                 }
             },

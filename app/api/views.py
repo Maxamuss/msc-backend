@@ -1,7 +1,6 @@
 import json
-import re
 from functools import cached_property
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -15,9 +14,9 @@ from rest_framework.views import APIView
 
 from db.models import ModelSchema
 from db.serializer import ModelSchemaSerializer
-from layout.utils import get_page_layout
+from layout.constants import ApplicationTypes
+from layout.utils import find_component, get_page_layout
 from .pagination import DataPagination
-from .utils import find_component
 
 
 class LayoutAPIView(APIView):
@@ -39,27 +38,15 @@ class LayoutAPIView(APIView):
     User layouts are defined for a Model and stored in a corresponding Page table.
     """
 
-    def parse_args(self):
-        args = self.request.GET.get('q', '').split(':')
-
-        # Validate path has correct number of arguments.
-        if len(args) != 3:
-            raise ParseError('Incorrect arguments supplied')
-
-        if args[0] not in ['developer', 'user']:
-            raise ParseError('Incorrect environment argument supplied')
-
-        return args
-
-    def get(self, request):
+    def get(self, *args, **kwargs):
         environment, resource, resource_type = self.parse_args()
 
         if resource == 'skeleton':
-            return self.get_skeleton_layout(environment, resource_type)
+            return self.get_skeleton_layout(environment, resource, resource_type)
 
         return self.get_page_layout(environment, resource, resource_type)
 
-    def get_skeleton_layout(self, environment, resource_type):
+    def get_skeleton_layout(self, environment, resource, resource_type):
         if environment == 'developer':
             try:
                 with open(f'layout/layouts/skeleton.json') as f:
@@ -85,14 +72,27 @@ class LayoutAPIView(APIView):
 
     def get_page_layout(self, environment, resource, resource_type):
         layout = get_page_layout(environment, resource, resource_type)
-
-        if layout is None:
-            return Response(
-                {'detail': 'Incorrect layout value'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         return Response(layout, status=status.HTTP_200_OK)
+
+    def parse_args(self) -> Tuple[str, str, str]:
+        environment = self.request.GET.get('environment')
+        resource = self.request.GET.get('resource')
+        resource_type = self.request.GET.get('resource_type')
+
+        # Validate path has correct number of arguments.
+        if not environment:
+            raise ParseError('environment parameter not supplied')
+
+        if environment not in ApplicationTypes._member_names_:
+            raise ParseError('Incorrect environment parameter supplied')
+
+        if not resource:
+            raise ParseError('resource parameter not supplied')
+
+        if not resource_type:
+            raise ParseError('resource_type parameter not supplied')
+
+        return environment, resource, resource_type
 
 
 class DataAPIView(APIView):

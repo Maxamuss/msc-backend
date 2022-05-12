@@ -13,3 +13,7 @@ def validate_uri(text):
 
 def validate_icon(text):
     _validate_text_length(text)
+
+
+def validate_field(field):
+    pass

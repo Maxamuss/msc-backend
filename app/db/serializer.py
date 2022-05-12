@@ -1,5 +1,3 @@
-from http import server
-
 from django.contrib.contenttypes.models import ContentType
 
 from rest_framework import serializers

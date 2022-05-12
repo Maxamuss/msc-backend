@@ -1,6 +1,6 @@
 {
     "list": {
-        "load_resource": false,
+        "page_object_fields": [],
         "layout": [
             {
                 "component": "header",
@@ -20,6 +20,7 @@
                 }
             },
             {
+                "id": "49a25bf4-24ea-448c-b21a-9aa0c2d59c20",
                 "component": "table",
                 "config": {
                     "actions": [],
@@ -33,105 +34,60 @@
                             "verbose_name": "Function Name",
                             "sortable": true,
                             "default_sorting": null
-                        },
-                        {
-                            "field_name": "id",
-                            "verbose_name": "ID",
-                            "sortable": false,
-                            "default_sorting": null
                         }
                     ],
-                    "data_uri": "function",
-                    "link_uri": "function:edit:${id}"
-                }
-            },
-            {
-                "component": "header",
-                "config": {
-                    "title_text": "Standard Functions",
-                    "subtitle_text": "Function that are available to all application implementing standard actions.",
-                    "tools": []
-                }
-            },
-            {
-                "component": "table",
-                "config": {
-                    "actions": [],
-                    "filters": [],
-                    "search": {
-                        "enabled": false
-                    },
-                    "fields": [
-                        {
-                            "field_name": "function_name",
-                            "verbose_name": "Function Name",
-                            "sortable": true,
-                            "default_sorting": null
-                        },
-                        {
-                            "field_name": "id",
-                            "verbose_name": "ID",
-                            "sortable": false,
-                            "default_sorting": null
-                        }
-                    ],
-                    "data_uri": "function",
+                    "model": "function",
                     "link_uri": "function:edit:${id}"
                 }
             }
         ]
     },
     "edit": {
-        "load_resource": true,
+        "page_object_fields": [
+            "function_name",
+            "id"
+        ],
         "layout": [
             {
                 "component": "header",
                 "config": {
-                    "title_text": "{{ function_name }} {{ id }}",
-                    "subtitle_text": "",
+                    "title_text": "{{ function_name }}",
+                    "subtitle_text": "{{ id }}",
                     "tools": []
                 }
             }
         ]
     },
     "create": {
-        "load_resource": false,
+        "page_object_fields": [],
         "layout": [
             {
                 "component": "header",
                 "config": {
                     "title_text": "Create Function",
-                    "subtitle_text": "",
+                    "subtitle_text": null,
                     "tools": []
                 }
             },
             {
-                "component": "container",
+                "id": "49a25bf4-24ea-448c-b21a-9aa0c2a59c15",
+                "component": "form",
                 "config": {
-                    "children": [
+                    "save_button_text": "Create Function",
+                    "model": "function",
+                    "link_uri": "function:edit:${id}",
+                    "fields": [
                         {
-                            "id": "49a25bf4-24ea-448c-b21a-9aa0c2a59c15",
-                            "component": "form",
-                            "config": {
-                                "save_button_text": "Create Function",
-                                "action_uri": "function",
-                                "link_uri": "function:edit:${id}",
-                                "field_uri": "create:49a25bf4-24ea-448c-b21a-9aa0c2a59c15",
-                                "fields": [
-                                    {
-                                        "field_name": "function_name",
-                                        "label": "Function Name",
-                                        "widget": "TextField",
-                                        "required": true,
-                                        "default": null,
-                                        "help_text": null,
-                                        "placeholder": null,
-                                        "layout": {
-                                            "flex": true,
-                                            "full_width": false
-                                        }
-                                    }
-                                ]
+                            "field_name": "function_name",
+                            "label": "Function Name",
+                            "widget": "TextField",
+                            "required": true,
+                            "default": null,
+                            "help_text": null,
+                            "placeholder": null,
+                            "layout": {
+                                "flex": true,
+                                "full_width": false
                             }
                         }
                     ]

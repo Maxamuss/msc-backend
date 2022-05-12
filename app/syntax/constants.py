@@ -1,6 +1,6 @@
 from enum import Enum
 
-from .validators import validate_icon, validate_text, validate_uri
+from .validators import validate_field, validate_icon, validate_text, validate_uri
 
 
 class ComponentsTypes(Enum):
@@ -28,9 +28,9 @@ COMPONENT_CONFIG = {
             'description': 'Text displayed inside button',
             'frontend_default': 'Button Text',
         },
-        'uri': {
+        'link': {
             'required': True,
-            'type': 'uri',
+            'type': 'link',
             'many': False,
             'validator': validate_uri,
             'default': None,
@@ -88,6 +88,48 @@ COMPONENT_CONFIG = {
                     },
                 }
             ],
+        },
+    },
+    ComponentsTypes.form: {
+        'model': {
+            'required': True,
+            'type': 'text',
+            'many': False,
+            'validator': validate_text,
+            'default': None,
+            'label': 'Form model',
+            'description': 'Model that this form is for',
+            'frontend_default': None,
+        },
+        'fields': {
+            'required': True,
+            'type': 'field',
+            'many': True,
+            'validator': validate_field,
+            'default': None,
+            'label': 'Fields',
+            'description': 'Fields for the form',
+            'frontend_default': [],
+        },
+        'submit_button_text': {
+            'required': True,
+            'type': 'text',
+            'many': False,
+            'validator': validate_text,
+            'default': 'Submit',
+            'label': 'Submit button text',
+            'description': 'Text to be displayed in the submit button',
+            'frontend_default': 'Submit',
+        },
+        'link': {
+            'required': False,
+            'type': 'text',
+            'many': False,
+            'validator': validate_text,
+            'default': 'edit',
+            'label': 'Link page',
+            'description': 'Page that each row should link to',
+            'frontend_default': 'edit',
         },
     },
 }
