@@ -4,7 +4,8 @@ from typing import Dict, Optional
 from rest_framework.exceptions import ParseError
 
 
-def get_page_layout(environment: str, resource: str, resource_type: str) -> Optional[Dict]:
+def get_page_layout(environment: str, resource: str, resource_type: str) -> Dict:
+    print(environment, resource, resource_type)
     if environment == 'developer':
         # Open layout file for model.
         try:
@@ -16,7 +17,5 @@ def get_page_layout(environment: str, resource: str, resource_type: str) -> Opti
             )
 
         # Get specific page in layout data.
-        layout = model_layouts.get(resource_type)
-
-        return layout
-    return None
+        return model_layouts[resource_type]
+    return {}

@@ -5,8 +5,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Application Style",
-                    "subtitle": "",
+                    "title_text": "Application Style",
+                    "subtitle_text": "",
                     "tools": []
                 }
             },

@@ -16,8 +16,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "{{ workflow_name }}",
-                    "subtitle": "",
+                    "title_text": "{{ workflow_name }}",
+                    "subtitle_text": "",
                     "tools": []
                 }
             }

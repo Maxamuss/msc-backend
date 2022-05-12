@@ -1,12 +1,12 @@
 {
     "list": {
-        "load_resource": false,
+        "page_object_fields": [],
         "layout": [
             {
                 "component": "header",
                 "config": {
                     "title_text": "Models",
-                    "subtitle_text": "{{ subtitle }}",
+                    "subtitle_text": null,
                     "tools": [
                         {
                             "component": "button",
@@ -53,16 +53,9 @@
                             "verbose_name": "Model Name",
                             "sortable": true,
                             "default_sorting": null
-                        },
-                        {
-                            "field_name": "id",
-                            "verbose_name": "ID",
-                            "sortable": false,
-                            "default_sorting": null
                         }
                     ],
-                    "data_uri": "modelschema",
-                    "field_uri": "list:49a25bf4-24ea-448c-b21a-9aa0c2d59c14",
+                    "model": "modelschema",
                     "link_uri": "modelschema:edit:${id}"
                 }
             }
@@ -74,8 +67,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "{{ name }}",
-                    "subtitle": "",
+                    "title_text": "{{ name }}",
+                    "subtitle_text": "",
                     "tools": [
                         {
                             "component": "button",
@@ -234,8 +227,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Create Model",
-                    "subtitle": "",
+                    "title_text": "Create Model",
+                    "subtitle_text": "",
                     "tools": []
                 }
             },

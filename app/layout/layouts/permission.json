@@ -5,8 +5,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Permissions",
-                    "subtitle": "",
+                    "title_text": "Permissions",
+                    "subtitle_text": "",
                     "tools": []
                 }
             },

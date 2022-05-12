@@ -5,8 +5,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Application Navigation",
-                    "subtitle": "",
+                    "title_text": "Application Navigation",
+                    "subtitle_text": "",
                     "tools": []
                 }
             },

@@ -5,8 +5,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Settings",
-                    "subtitle": "",
+                    "title_text": "Settings",
+                    "subtitle_text": "",
                     "tools": []
                 }
             }

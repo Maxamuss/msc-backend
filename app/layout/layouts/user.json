@@ -1,12 +1,12 @@
 {
     "list": {
-        "load_resource": false,
+        "page_object_fields": [],
         "layout": [
             {
                 "component": "header",
                 "config": {
-                    "title": "Users",
-                    "subtitle": "",
+                    "title_text": "Users",
+                    "subtitle_text": "",
                     "tools": [
                         {
                             "component": "button",
@@ -60,13 +60,13 @@
         ]
     },
     "create": {
-        "load_resource": false,
+        "page_object_fields": [],
         "layout": [
             {
                 "component": "header",
                 "config": {
-                    "title": "Add User",
-                    "subtitle": "",
+                    "title_text": "Add User",
+                    "subtitle_text": "",
                     "tools": []
                 }
             },
@@ -83,19 +83,6 @@
                                 "link_uri": "user:edit:${id}",
                                 "field_uri": "create:49a25bf4-24ea-448c-b21a-9aa0c2d59d15",
                                 "fields": [
-                                    {
-                                        "field_name": "username",
-                                        "label": "Username",
-                                        "widget": "TextField",
-                                        "required": true,
-                                        "default": null,
-                                        "help_text": null,
-                                        "placeholder": null,
-                                        "layout": {
-                                            "flex": true,
-                                            "full_width": false
-                                        }
-                                    },
                                     {
                                         "field_name": "email",
                                         "label": "Email",
@@ -144,13 +131,17 @@
         ]
     },
     "edit": {
-        "load_resource": true,
+        "page_object_fields": [
+            "email",
+            "first_name",
+            "last_name"
+        ],
         "layout": [
             {
                 "component": "header",
                 "config": {
-                    "title": "Edit User: {{ email }}",
-                    "subtitle": "",
+                    "title_text": "Edit User: {{ email }}",
+                    "subtitle_text": "",
                     "tools": []
                 }
             },
@@ -167,19 +158,6 @@
                                 "link_uri": "user:edit:${id}",
                                 "field_uri": "edit:49a25bf4-24ed-448c-b21a-9aa0c2d59d15",
                                 "fields": [
-                                    {
-                                        "field_name": "username",
-                                        "label": "Username",
-                                        "widget": "TextField",
-                                        "required": true,
-                                        "default": null,
-                                        "help_text": null,
-                                        "placeholder": null,
-                                        "layout": {
-                                            "flex": true,
-                                            "full_width": false
-                                        }
-                                    },
                                     {
                                         "field_name": "email",
                                         "label": "Email",

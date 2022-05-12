@@ -100,18 +100,19 @@ class DataAPIView(APIView):
     API responsible for returning data for a specified model.
 
     Defines the following views:
-        - list:   GET       /data/?q=${model} | /data/?q=${model}@${filter_model}:${filter_id}
-            - Default filters:       @${field_name}:${value}
-            - User applied filters:  #${field_name}:${value}
-        - create: POST      /data/?q=${model}
-        - detail: GET       /data/?q=${model}:${id}
-        - update: PUT/PATCH /data/?q=${model}:${id}
+        - list:   GET       /data/?m=${model}&p=${page}
+        - create: POST      /data/?m=${model}&p=${page}
+        - detail: GET       /data/?m=${model}:${id}&p=${page}
+        - update: PUT/PATCH /data/?m=${model}:${id}&p=${page}
+        - delete: DELETE    /data/?m=${model}:${id}&p=${page}
 
-    https://regex101.com/r/gxQjwQ/1
+    `model` arg must be passed to tell the view which model and optionally the object is being used.
 
-    `c` args can also be passed which tell the view which component made the request. This is used
-    for example by the table and form components as they need to now which fields to use in
-    serialization.
+    `page` arg must also be supplied to tell the view which page is being requested from.
+
+    `component` arg can optionally be passed which tell the view which component (id) made the request.
+    This is used for example by the table and form components as they need to now which fields
+    to use in serialization.
     """
 
     overridden_serializers = {
@@ -119,92 +120,38 @@ class DataAPIView(APIView):
     }
 
     def method_setup(self) -> None:
-        self.model_name, self.filter_model_name, self.model_id = self.parse_q_args()
-        self.page, self.component_id = self.parse_c_args()
-        self.model = self.get_model_class(self.model_name)
+        self.model_name, self.model_id = self.parse_model_arg()
+        self.model = self.get_model_class()
 
-    def parse_q_args(self) -> Tuple[str, Optional[str], Optional[str]]:
-        q = self.request.query_params.get('q')
+        self.page = self.parse_page_arg()
+        self.component_id = self.parse_component_arg()
 
-        if not q:
-            raise ParseError('Did not pass q parameter')
+    def parse_model_arg(self) -> Tuple[str, Optional[str]]:
+        model = self.request.query_params['model']
 
-        pattern = re.compile(
-            r'^(?P<model>[a-zA-Z_]{1,255})|@(?P<filter_model>[a-zA-Z_]{1,255})|:(?P<id>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})'
-        )
+        colon_count = model.count(':')
 
-        groups = re.findall(pattern, q)
-        matches = [None, None, None]
-
-        for group in groups:
-            for index, value in enumerate(group):
-                if value:
-                    matches[index] = value
-
-        model_name, filter_model_name, model_id = matches
-
-        # Validate correct permutation of args. Either:
-        # model, filter_model, id
-        # model, id
-        # model
-
-        if not model_name:
-            raise ParseError('Model argument not provided')
-
-        if not model_id and filter_model_name:
-            raise ParseError('Filter model id argument not provided')
-
-        return model_name, filter_model_name, model_id
-
-    def parse_c_args(self) -> List[Optional[str]]:
-        """
-        Retrive the fields of the component passed. The component must have a `field` attribute in
-        its config. Should be in the format:
-
-        ${page}:${component_id}
-
-        https://regex101.com/r/8ov5BM/1
-        """
-        NONE_RETURN_VALUES: List[Optional[str]] = [None, None]
-
-        c = self.request.query_params.get('c')
-
-        if not c:
-            return NONE_RETURN_VALUES
-
-        pattern = re.compile(
-            r'^(?P<page>[a-zA-Z_]{1,255}):(?P<id>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})'
-        )
-
-        groups = re.findall(pattern, c)
-        matches: List[Optional[str]] = [None, None]
-
-        for group in groups:
-            for index, value in enumerate(group):
-                if value:
-                    matches[index] = value
-
-        if any([x is None for x in matches]):
-            return NONE_RETURN_VALUES
-
-        return matches
-
-    def get_model_class(self, model_name) -> DjangoModel:
-        if not model_name:
-            raise Exception()
-
-        model_schema = ModelSchema.objects.filter(name__iexact=model_name).first()
-
-        if model_schema is not None:
-            model = model_schema.as_model()
-            self.environment = 'user'
+        if colon_count == 0:
+            return model, None
+        elif colon_count == 1:
+            return model.split(':')
         else:
-            model_obj = ContentType.objects.filter(model=model_name).first()
+            raise ParseError('model parameter format incorrect')
 
-            if model_obj is None:
-                raise ParseError('Model not found')
+    def parse_page_arg(self) -> str:
+        return self.request.query_params['page']
 
-            model = apps.get_model(model_obj.app_label, model_name)
+    def parse_component_arg(self) -> Optional[str]:
+        return self.request.query_params.get('component')
+
+    def get_model_class(self) -> DjangoModel:
+        try:
+            model_schema = ModelSchema.objects.get(name__iexact=self.model_name)
+            model = model_schema.as_model()
+            self.environment = 'developer'
+        except ModelSchema.DoesNotExist:
+            model_obj = get_object_or_404(ContentType.objects.all(), model=self.model_name)
+            model = apps.get_model(model_obj.app_label, self.model_name)
             self.environment = 'developer'
 
         return model
@@ -216,22 +163,19 @@ class DataAPIView(APIView):
     def get(self, *args, **kwargs):
         self.method_setup()
 
-        if self.model_id and not self.filter_model_name:
+        if self.model_id:
             return self.detail()
         return self.list()
 
     def post(self, *args, **kwargs):
         self.method_setup()
 
-        if not self.model_id and not self.filter_model_name:
-            return self.create()
-
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return self.create()
 
     def put(self, *args, **kwargs):
         self.method_setup()
 
-        if self.model_id and not self.filter_model_name:
+        if self.model_id:
             return self.update()
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -242,7 +186,7 @@ class DataAPIView(APIView):
     def delete(self, *args, **kwargs):
         self.method_setup()
 
-        if self.model_id and not self.filter_model_name:
+        if self.model_id:
             return self.destroy()
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -259,7 +203,7 @@ class DataAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
     def detail(self):
-        resource = get_object_or_404(self.get_queryset(), id=self.model_id)
+        resource = self.get_object()
         serializer = self.get_serializer(resource)
         return Response(serializer.data)
 
@@ -271,7 +215,7 @@ class DataAPIView(APIView):
 
     def update(self):
         partial = self.request.method.lower() == 'patch'
-        resource = get_object_or_404(self.get_queryset(), id=self.model_id)
+        resource = self.get_object()
         serializer = self.get_serializer(resource, data=self.request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -284,7 +228,7 @@ class DataAPIView(APIView):
         return Response(serializer.data)
 
     def destroy(self):
-        resource = get_object_or_404(self.get_queryset(), id=self.model_id)
+        resource = self.get_object()
         resource.delete()
         return Response()
 
@@ -292,74 +236,64 @@ class DataAPIView(APIView):
     # Util methods
     # ---------------------------------------------------------------------------------------------
 
+    def get_object(self):
+        return get_object_or_404(self.get_base_queryset(), id=self.model_id)
+
+    def get_base_queryset(self):
+        return self.model.objects.all()
+
     def get_queryset(self):
-        """
-        Options:
-            - Search on each column
-            - Sorting
-            - Filters
-        """
-        queryset = self.model.objects.all()
-        queryset = self.set_queryset_fields(queryset)
-        queryset = self.order_queryset(queryset)
-
-        # Filter the queryset.
-        query = {}
-
-        if self.filter_model_name:
-            if self.filter_model_name in [field.name for field in self.model._meta.get_fields()]:
-                query[self.filter_model_name] = self.model_id
-
-        return queryset.filter(**query)
-
-    def set_queryset_fields(self, queryset):
-        only_fields = self.get_fields
-
-        if isinstance(only_fields, list):
-            queryset = queryset.only(*only_fields)
-
+        queryset = self.get_base_queryset()
+        queryset = self.queryset_only_fields(queryset)
+        queryset = self.queryset_ordering(queryset)
         return queryset
 
-    def order_queryset(self, queryset):
+    def queryset_only_fields(self, queryset):
+        if isinstance(self.get_model_fields, list):
+            return queryset.only(*self.get_model_fields)
+        return queryset
+
+    def queryset_ordering(self, queryset):
         return queryset.order_by('-created_at')
 
     @cached_property
-    def get_fields(self) -> Union[str, List]:
+    def get_model_fields(self):
         """
-        If the component query parameter is passed, get the component and its defined fields.
+        If the component query parameter is passed, get the component and its defined fields
+        otherwise get the page_object_fields from the page.
         """
-        if self.page and self.component_id:
-            layout = get_page_layout(self.environment, self.model_name, self.page)
+        all_fields = '__all__'
+        layout = get_page_layout(self.environment, self.model_name, self.page)
 
-            if layout:
-                component = find_component(layout.get('layout', []), self.component_id)
+        if self.component_id:
+            component = find_component(layout['layout'], self.component_id)
 
-                if component:
-                    fields = [
-                        x.get('field_name') for x in component.get('config', {}).get('fields', [])
-                    ]
+            if component:
+                fields = [
+                    x.get('field_name') for x in component.get('config', {}).get('fields', [])
+                ]
+            else:
+                fields = all_fields
+        else:
+            fields = layout.get('page_object_fields', all_fields)
 
-                    if 'id' not in fields:
-                        fields.append('id')
+        if isinstance(fields, list) and 'id' not in fields:
+            fields.append('id')
 
-                    return fields
-
-        return '__all__'
+        return fields
 
     def get_serializer(self, *args, **kwargs):
-        serializer_class = self.overridden_serializers.get(
-            self.model, self.generic_serializer(self.model, self.get_fields)
-        )
+        serializer_class = self.overridden_serializers.get(self.model, self.generic_serializer())
         kwargs.setdefault(
             'context',
             {'request': self.request, 'format': self.format_kwarg, 'view': self},
         )
         return serializer_class(*args, **kwargs)
 
-    def generic_serializer(self, serializer_model, serializer_fields):
+    def generic_serializer(self):
         class GenericSerializer(serializers.ModelSerializer):
             class Meta:
-                model = serializer_model
-                fields = serializer_fields
+                model = self.model
+                fields = self.get_model_fields
 
         return GenericSerializer

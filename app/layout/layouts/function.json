@@ -5,8 +5,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "My Functions",
-                    "subtitle": "Function that you have defined to use in your application.",
+                    "title_text": "My Functions",
+                    "subtitle_text": "Function that you have defined to use in your application.",
                     "tools": [
                         {
                             "component": "button",
@@ -48,8 +48,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Standard Functions",
-                    "subtitle": "Function that are available to all application implementing standard actions.",
+                    "title_text": "Standard Functions",
+                    "subtitle_text": "Function that are available to all application implementing standard actions.",
                     "tools": []
                 }
             },
@@ -87,8 +87,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "{{ function_name }} {{ id }}",
-                    "subtitle": "",
+                    "title_text": "{{ function_name }} {{ id }}",
+                    "subtitle_text": "",
                     "tools": []
                 }
             }
@@ -100,8 +100,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Create Function",
-                    "subtitle": "",
+                    "title_text": "Create Function",
+                    "subtitle_text": "",
                     "tools": []
                 }
             },

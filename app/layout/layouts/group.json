@@ -5,8 +5,8 @@
             {
                 "component": "header",
                 "config": {
-                    "title": "Groups",
-                    "subtitle": "",
+                    "title_text": "Groups",
+                    "subtitle_text": "",
                     "tools": []
                 }
             }
