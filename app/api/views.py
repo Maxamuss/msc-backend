@@ -100,11 +100,11 @@ class DataAPIView(APIView):
     API responsible for returning data for a specified model.
 
     Defines the following views:
-        - list:   GET       /data/?m=${model}&p=${page}
-        - create: POST      /data/?m=${model}&p=${page}
-        - detail: GET       /data/?m=${model}:${id}&p=${page}
-        - update: PUT/PATCH /data/?m=${model}:${id}&p=${page}
-        - delete: DELETE    /data/?m=${model}:${id}&p=${page}
+        - list:   GET       /data/?model=${model}&page=${page}
+        - create: POST      /data/?model=${model}&page=${page}
+        - detail: GET       /data/?model=${model}:${id}&page=${page}
+        - update: PUT/PATCH /data/?model=${model}:${id}&page=${page}
+        - delete: DELETE    /data/?model=${model}:${id}&page=${page}
 
     `model` arg must be passed to tell the view which model and optionally the object is being used.
 
