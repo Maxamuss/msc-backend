@@ -13,7 +13,7 @@
                             "config": {
                                 "text": "Add Model",
                                 "icon": "PlusCircleIcon",
-                                "uri": "modelschema:create"
+                                "link_uri": "modelschema:create"
                             }
                         }
                     ]
@@ -61,7 +61,9 @@
         ]
     },
     "edit": {
-        "page_object_fields": [],
+        "page_object_fields": [
+            "name"
+        ],
         "layout": [
             {
                 "component": "header",
@@ -84,136 +86,125 @@
                 "component": "tabs",
                 "config": {
                     "tabs": [
+                        "Definition",
+                        "Fields",
+                        "Pages",
+                        "Workflows",
+                        "Permissions"
+                    ],
+                    "components": [
                         {
-                            "name": "Definition",
-                            "content": {
-                                "id": "49a25bf4-24ea-448c-b21a-9aa0c2d59c13",
-                                "component": "form",
-                                "config": {
-                                    "save_button_text": "Save",
-                                    "action": "patch",
-                                    "action_uri": "modelschema:${id}",
-                                    "link_uri": "modelschema:edit:${id}",
-                                    "fields": [
-                                        {
-                                            "field_name": "model_name",
-                                            "label": "Model Name",
-                                            "widget": "TextField",
-                                            "required": true,
-                                            "default": null,
-                                            "help_text": "test",
-                                            "placeholder": "test",
-                                            "layout": {
-                                                "flex": true,
-                                                "full_width": false
-                                            }
-                                        }
-                                    ]
-                                }
+                            "id": "49a25bf4-24ea-448c-b21a-9aa0c2d59c13",
+                            "component": "form",
+                            "config": {
+                                "save_button_text": "Save",
+                                "action": "patch",
+                                "model": "modelschema",
+                                "link_uri": "modelschema:edit:${id}",
+                                "fields": [
+                                    {
+                                        "field_name": "name",
+                                        "label": "Model Name",
+                                        "widget": "TextField",
+                                        "required": true,
+                                        "default": null,
+                                        "help_text": "test",
+                                        "placeholder": "test"
+                                    }
+                                ]
                             }
                         },
                         {
-                            "name": "Fields",
-                            "content": {
-                                "component": "inline",
-                                "config": {
-                                    "fields": [
-                                        {
-                                            "field_name": "name",
-                                            "verbose_name": "Field Name",
-                                            "sortable": true,
-                                            "default_sorting": null
-                                        },
-                                        {
-                                            "field_name": "class_name",
-                                            "verbose_name": "Class Name",
-                                            "sortable": true,
-                                            "default_sorting": null
-                                        }
-                                    ],
-                                    "data_uri": "fieldschema@model_schema:${id}",
-                                    "action_uri": "fieldschema",
-                                    "create": {
-                                        "component": "core@model-field-form",
-                                        "config": {
-                                            "data_uri": "fieldschema@model_schema:${id}",
-                                            "action_uri": "fieldschema"
-                                        }
+                            "id": "49a25bf4-24ea-448c-b21a-9aa0c2d59c55",
+                            "component": "inline",
+                            "config": {
+                                "fields": [
+                                    {
+                                        "field_name": "name",
+                                        "verbose_name": "Field Name",
+                                        "sortable": true,
+                                        "default_sorting": null
                                     },
-                                    "view": {
-                                        "component": "core@model-field-form",
-                                        "config": {}
+                                    {
+                                        "field_name": "class_name",
+                                        "verbose_name": "Class Name",
+                                        "sortable": true,
+                                        "default_sorting": null
+                                    }
+                                ],
+                                "model": "fieldschema",
+                                "related_model": "modelschema:${id}",
+                                "modal": {
+                                    "id": "49a25bf4-24ea-448c-b21a-9aa0c2d59c65",
+                                    "component": "core@model-field-form",
+                                    "config": {
+                                        "model": "fieldschema"
                                     }
                                 }
                             }
                         },
                         {
-                            "name": "Pages",
-                            "content": {
-                                "component": "table",
-                                "config": {
-                                    "actions": [],
-                                    "filters": [],
-                                    "search": {
-                                        "enabled": true
+                            "id": "49a25bf4-24ea-448c-b21a-9aa0c2d59c56",
+                            "component": "table",
+                            "config": {
+                                "actions": [],
+                                "filters": [],
+                                "search": {
+                                    "enabled": false
+                                },
+                                "fields": [
+                                    {
+                                        "field_name": "page_name",
+                                        "verbose_name": "Page Name",
+                                        "sortable": true,
+                                        "default_sorting": null
+                                    }
+                                ],
+                                "model": "page",
+                                "related_model": "modelschema:${id}",
+                                "link_uri": "page:edit:${id}"
+                            }
+                        },
+                        {
+                            "component": "column",
+                            "config": {
+                                "children": [
+                                    {
+                                        "component": "button",
+                                        "config": {
+                                            "text": "Create Workflow",
+                                            "icon": "ViewGridAddIcon",
+                                            "uri": "workflow:create"
+                                        }
                                     },
-                                    "fields": [
-                                        {
-                                            "field_name": "page_name",
-                                            "verbose_name": "Page Name",
-                                            "sortable": true,
-                                            "default_sorting": null
+                                    {
+                                        "id": "49a25bf4-24ea-448c-b21a-9aa0c2d59c58",
+                                        "component": "table",
+                                        "config": {
+                                            "actions": [],
+                                            "filters": [],
+                                            "search": {
+                                                "enabled": false
+                                            },
+                                            "fields": [
+                                                {
+                                                    "field_name": "workflow_name",
+                                                    "verbose_name": "Workflow Name",
+                                                    "sortable": true,
+                                                    "default_sorting": null
+                                                }
+                                            ],
+                                            "model": "workflow",
+                                            "related_model": "modelschema:${id}",
+                                            "link_uri": "workflow:edit:${id}"
                                         }
-                                    ],
-                                    "data_uri": "page@modelschema:${id}",
-                                    "link_uri": "page:edit:${id}"
-                                }
+                                    }
+                                ]
                             }
                         },
                         {
-                            "name": "Workflows",
-                            "content": {
-                                "component": "container",
-                                "config": {
-                                    "children": [
-                                        {
-                                            "component": "button",
-                                            "config": {
-                                                "text": "Create Workflow",
-                                                "icon": "ViewGridAddIcon",
-                                                "uri": "workflow:create"
-                                            }
-                                        },
-                                        {
-                                            "component": "table",
-                                            "config": {
-                                                "actions": [],
-                                                "filters": [],
-                                                "search": {
-                                                    "enabled": false
-                                                },
-                                                "fields": [
-                                                    {
-                                                        "field_name": "workflow_name",
-                                                        "verbose_name": "Workflow Name",
-                                                        "sortable": true,
-                                                        "default_sorting": null
-                                                    }
-                                                ],
-                                                "data_uri": "workflow@modelschema:${id}",
-                                                "link_uri": "workflow:edit:${id}"
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            "name": "Permissions",
-                            "content": {
-                                "component": "container",
-                                "config": {}
-                            }
+                            "component": "container",
+                            "config": {}
                         }
                     ]
                 }
@@ -237,8 +228,7 @@
                 "config": {
                     "save_button_text": "Create Model",
                     "model": "modelschema",
-                    "link_uri": "modelschema:edit:${id}",
-                    "field_uri": "create:49a25bf4-24ea-448c-b21a-9aa0c2d59c15",
+                    "link_uri": "modelschema:edit:${model_id}",
                     "fields": [
                         {
                             "field_name": "name",

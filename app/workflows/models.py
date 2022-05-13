@@ -4,7 +4,9 @@ from core.models import BaseModel
 
 
 class Workflow(BaseModel):
-    model = models.ForeignKey('db.ModelSchema', on_delete=models.CASCADE, related_name='workflows')
+    model_schema = models.ForeignKey(
+        'db.ModelSchema', on_delete=models.CASCADE, related_name='workflows'
+    )
     workflow_name = models.CharField(max_length=255)
     definition = models.JSONField(default=dict)
 

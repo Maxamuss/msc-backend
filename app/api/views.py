@@ -23,15 +23,8 @@ class LayoutAPIView(APIView):
     """
     API responsible for returning a page layout.
 
-    $model:$id
-
-
-    Path has to be in the format:
-    /layout/?1=${developer|user}:$resource:$resource_type
-
-    - First argument is the environment the user is in (developer or user).
-    - Second argument is the resource e.g. a model or page type (function, package)
-    - Third argument is the specific resource layout e.g. list, edit, delete, custom_page_name
+    /layout/?environment=${environment}&model=${model}&page=${page}
+        - environment the user is in (developer or user).
 
     Developer layouts are defined in files. These are cached in Redis with a 15 minute timeout.
 
@@ -110,6 +103,9 @@ class DataAPIView(APIView):
 
     `page` arg must also be supplied to tell the view which page is being requested from.
 
+    `related_model` arg can optionally be passed to filter the query. This is formatted as a model
+    with a object id - ${related_model}:${related_model_id}
+
     `component` arg can optionally be passed which tell the view which component (id) made the request.
     This is used for example by the table and form components as they need to now which fields
     to use in serialization.
@@ -124,6 +120,7 @@ class DataAPIView(APIView):
         self.model = self.get_model_class()
 
         self.page = self.parse_page_arg()
+        self.related_model, self.related_model_id = self.parse_related_model_arg()
         self.component_id = self.parse_component_arg()
 
     def parse_model_arg(self) -> Tuple[str, Optional[str]]:
@@ -140,6 +137,13 @@ class DataAPIView(APIView):
 
     def parse_page_arg(self) -> str:
         return self.request.query_params['page']
+
+    def parse_related_model_arg(self) -> Tuple[Optional[str], Optional[str]]:
+        related_model = self.request.query_params.get('related_model')
+
+        if related_model and related_model.count(':') == 1:
+            return related_model.split(':')
+        return None, None
 
     def parse_component_arg(self) -> Optional[str]:
         return self.request.query_params.get('component')
@@ -244,8 +248,20 @@ class DataAPIView(APIView):
 
     def get_queryset(self):
         queryset = self.get_base_queryset()
+        queryset = self.queryset_related_filter(queryset)
         queryset = self.queryset_only_fields(queryset)
         queryset = self.queryset_ordering(queryset)
+        return queryset
+
+    def queryset_related_filter(self, queryset):
+        """
+        Filter the queryset if the related model parameter is passed.
+        """
+        model_schema_mapping = {'modelschema': 'model_schema'}
+
+        if self.related_model and self.related_model_id:
+            filter_name = model_schema_mapping.get(self.related_model, self.related_model)
+            queryset = queryset.filter(**{filter_name: self.related_model_id})
         return queryset
 
     def queryset_only_fields(self, queryset):
@@ -263,10 +279,13 @@ class DataAPIView(APIView):
         otherwise get the page_object_fields from the page.
         """
         all_fields = '__all__'
-        layout = get_page_layout(self.environment, self.model_name, self.page)
+
+        # Component will be in related model layout.
+        model_name = self.related_model or self.model_name
+        layout = get_page_layout(self.environment, model_name, self.page)
 
         if self.component_id:
-            component = find_component(layout['layout'], self.component_id)
+            component = find_component(layout.get('layout', []), self.component_id)
 
             if component:
                 fields = [

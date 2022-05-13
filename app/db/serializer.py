@@ -46,6 +46,7 @@ class ModelSchemaSerializer(serializers.ModelSerializer):
                 page_name=page_name,
                 layout=definition,
                 model=model_content_type,
+                model_schema=model_schema,
             )
 
         return model_schema

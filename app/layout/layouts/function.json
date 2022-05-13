@@ -55,6 +55,30 @@
                     "subtitle_text": "{{ id }}",
                     "tools": []
                 }
+            },
+            {
+                "id": "49a25bf4-24ea-448c-b21a-9aa0c2a59c15",
+                "component": "form",
+                "config": {
+                    "save_button_text": "Save",
+                    "model": "function",
+                    "link_uri": "function:edit:${id}",
+                    "fields": [
+                        {
+                            "field_name": "function_name",
+                            "label": "Function Name",
+                            "widget": "TextField",
+                            "required": true,
+                            "default": null,
+                            "help_text": null,
+                            "placeholder": null,
+                            "layout": {
+                                "flex": true,
+                                "full_width": false
+                            }
+                        }
+                    ]
+                }
             }
         ]
     },

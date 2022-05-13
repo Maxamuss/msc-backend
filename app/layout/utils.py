@@ -16,7 +16,7 @@ def get_page_layout(environment: str, resource: str, resource_type: str) -> Dict
             )
 
         # Get specific page in layout data.
-        return model_layouts[resource_type]
+        return model_layouts.get(resource_type, {})
     return {}
 
 
@@ -28,6 +28,6 @@ def find_component(layout: List, component_id: str) -> Optional[Dict]:
     for component in layout:
         if component.get('id') == component_id:
             return component
-        elif children := component['config'].get('children'):
+        elif children := component['config'].get('components'):
             return find_component(children, component_id)
     return None

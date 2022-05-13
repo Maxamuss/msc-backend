@@ -1,7 +1,7 @@
 import re
 from uuid import uuid4
 
-from .constants import COMPONENT_CONFIG, STATELESS_COMPONENTS, ComponentsTypes
+from .constants import COMPONENT_CONFIG, STATELESS_COMPONENTS, ComponentsTypes, ManyOptions
 
 
 class SyntaxParser:
@@ -24,10 +24,17 @@ class SyntaxParser:
 
             if config['required'] or attribute_value:
                 # The config key is required or an optional config key has a value.
-                if config['many']:
-                    # If the value has multiple values, recursively call this method on all elements.
-                    for child_component in attribute_value:
-                        self.validate_component(child_component)
+                if config['many'] != ManyOptions.none:
+                    # Attribute can either be a component or a dictionary of attributes.
+                    for element in attribute_value:
+                        if config['many'] == ManyOptions.attributes:
+                            # Case 1: attribute is a dictionary of attributes.
+                            # Call custom validation function on each element of list.
+                            config['validator'](element)
+                        else:
+                            # Case 2: attribute is a component.
+                            # Recursively call this method on all elements of attribute list.
+                            self.validate_component(element)
                 else:
                     # Otherwise, make sure the string value is valid.
                     if config['validator'] is not None:
@@ -77,15 +84,21 @@ class SyntaxParser:
                 for attribute, value in component['config'].items():
                     if isinstance(value, list):
                         if attribute == 'fields':
+                            # Attribute is a list of fields.
                             for field in value:
                                 self.stateless_fields.append(field['field_name'])
                         else:
+                            # Attribute is a list of children components.
                             for child_component in value:
                                 for attribute_, value_ in child_component['config'].items():
                                     find_matched_fields(attribute_, value_)
                     else:
+                        # Attribute has a string value.
                         find_matched_fields(attribute, value)
 
         page['page_object_fields'] = self.stateless_fields
 
         return page
+
+    def parse_model(self, model):
+        pass

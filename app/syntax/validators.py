@@ -15,5 +15,5 @@ def validate_icon(text):
     _validate_text_length(text)
 
 
-def validate_field(field):
+def validate_form_field(field):
     pass

@@ -12,6 +12,7 @@ class Page(BaseModel):
     """
 
     model = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    model_schema = models.ForeignKey('db.ModelSchema', on_delete=models.CASCADE)
 
     page_name = models.CharField(max_length=255)
     layout = models.JSONField(default=list)
