@@ -3,24 +3,24 @@
         {
             "component": "header",
             "config": {
-                "title_text": "title",
-                "subtitle_text": "subtitle",
+                "title": "title",
+                "subtitle": "subtitle",
                 "tools": []
             }
         },
         {
             "component": "header",
             "config": {
-                "title_text": "{{ text1 }}",
-                "subtitle_text": "{{ text2 }}",
+                "title": "{{ text1 }}",
+                "subtitle": "{{ text2 }}",
                 "tools": []
             }
         },
         {
             "component": "header",
             "config": {
-                "title_text": "{{ text1 }}",
-                "subtitle_text": "{{ text2 }}",
+                "title": "{{ text1 }}",
+                "subtitle": "{{ text2 }}",
                 "tools": [
                     {
                         "component": "button",
@@ -46,24 +46,24 @@
         {
             "component": "header",
             "config": {
-                "title_text": "",
-                "subtitle_text": "",
+                "title": "",
+                "subtitle": "",
                 "tools": []
             }
         },
         {
             "component": "header",
             "config": {
-                "title_text": null,
-                "subtitle_text": "{{ text2 }}",
+                "title": null,
+                "subtitle": "{{ text2 }}",
                 "tools": []
             }
         },
         {
             "component": "header",
             "config": {
-                "title_text": "{{ text1 }}",
-                "subtitle_text": "{{ text2 }}",
+                "title": "{{ text1 }}",
+                "subtitle": "{{ text2 }}",
                 "tools": [
                     {
                         "component": "button",

@@ -36,6 +36,7 @@
             }
         },
         {
+            "id": "e27ec806-a119-406e-a4ae-0b9837e9a620",
             "component": "button",
             "config": {
                 "text": "",

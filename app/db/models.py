@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.db import models
 from django.utils.text import slugify

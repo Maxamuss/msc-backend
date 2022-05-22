@@ -13,15 +13,16 @@ class SyntaxParserTest(TestCase):
     # Test that the component configuration are being correctly identified as valid or not.
     def test_validate_component_no_existing_id(self):
         fixture = self._load_fixture('components/button.json')
-        component = fixture['valid'][1]
+        component = fixture['valid'][1]  # no id
         component_id = component.get('id', 'no-id')
         SyntaxParser().validate_component(component)
 
+        self.assertIsNotNone(component.get('id'))
         self.assertNotEqual(component_id, component['id'])
 
     def test_validate_component_existing_id(self):
         fixture = self._load_fixture('components/button.json')
-        component = fixture['valid'][0]
+        component = fixture['valid'][0]  # has id
         component_id = component['id']
         SyntaxParser().validate_component(component)
 
@@ -39,6 +40,16 @@ class SyntaxParserTest(TestCase):
 
     def test_validate_component_header(self):
         fixture = self._load_fixture('components/header.json')
+
+        for component in fixture['valid']:
+            SyntaxParser().validate_component(component)
+
+        for component in fixture['invalid']:
+            with self.assertRaises(Exception):
+                SyntaxParser().validate_component(component)
+
+    def test_validate_component_form(self):
+        fixture = self._load_fixture('components/form.json')
 
         for component in fixture['valid']:
             SyntaxParser().validate_component(component)

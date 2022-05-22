@@ -27,11 +27,6 @@ class ModelSchemaEditor:
             # error
             pass
 
-        # # Create default pages for model.
-        # pages = ['list', 'edit', 'create', 'delete']
-        # for page_name in pages:
-        #     Page.objects.create(content_object=new_model, page_name=page_name)
-
     def alter_table(self, new_model):
         old_name = self.initial_model._meta.db_table
         new_name = new_model._meta.db_table

@@ -12,7 +12,7 @@ from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from db.models import ModelSchema
+from db.models import FieldSchema, ModelSchema
 from db.serializer import ModelSchemaSerializer
 from layout.constants import ApplicationTypes
 from layout.utils import find_component, get_page_layout
@@ -265,8 +265,9 @@ class DataAPIView(APIView):
         return queryset
 
     def queryset_only_fields(self, queryset):
-        if isinstance(self.get_model_fields, list):
-            return queryset.only(*self.get_model_fields)
+        if not self.model == FieldSchema:
+            if isinstance(self.get_model_fields, list):
+                return queryset.only(*self.get_model_fields)
         return queryset
 
     def queryset_ordering(self, queryset):

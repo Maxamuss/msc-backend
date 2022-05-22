@@ -1,37 +1,70 @@
 {
-    "component": "form",
-    "config": {
-        "save_button_text": "text",
-        "action_uri": "modelschema",
-        "link_uri": "modelschema:edit:${id}",
-        "field_uri": "create:49a25bf4-24ea-448c-b21a-9aa0c2d59c15",
-        "fields": [
-            {
-                "field_name": "test_1",
-                "label": "Model Name",
-                "widget": "TextField",
-                "required": true,
-                "default": null,
-                "help_text": "A human readable name representing for this model",
-                "placeholder": null,
-                "layout": {
-                    "flex": true,
-                    "full_width": false
-                }
-            },
-            {
-                "field_name": "test_2",
-                "label": "Model Name",
-                "widget": "TextField",
-                "required": true,
-                "default": null,
-                "help_text": "A human readable name representing for this model",
-                "placeholder": null,
-                "layout": {
-                    "flex": true,
-                    "full_width": false
-                }
+    "valid": [
+        {
+            "component": "form",
+            "config": {
+                "model": "modelschema"
             }
-        ]
-    }
+        },
+        {
+            "component": "form",
+            "config": {
+                "model": "modelschema",
+                "uri": "modelschema:edit:${id}"
+            }
+        },
+        {
+            "component": "form",
+            "config": {
+                "model": "modelschema",
+                "uri": "modelschema:edit:${id}",
+                "save_button_text": "button text"
+            }
+        },
+        {
+            "component": "form",
+            "config": {
+                "model": "modelschema",
+                "uri": "modelschema:edit:${id}",
+                "save_button_text": "button text",
+                "action": "PATCH"
+            }
+        },
+        {
+            "component": "form",
+            "config": {
+                "model": "modelschema",
+                "uri": "modelschema:edit:${id}",
+                "save_button_text": "button text",
+                "action": "PATCH",
+                "fields": "__all__"
+            }
+        },
+        {
+            "component": "form",
+            "config": {
+                "model": "modelschema",
+                "fields": []
+            }
+        }
+    ],
+    "invalid": [
+        {
+            "component": "form",
+            "config": {
+                "model": null,
+                "uri": "modelschema:edit:${id}",
+                "save_button_text": "button text",
+                "action": "PATCH",
+                "fields": "__all__"
+            }
+        },
+        {
+            "component": "form",
+            "config": {
+                "uri": "modelschema:edit:${id}",
+                "fields": "__all__"
+            }
+        }
+    ]
 }

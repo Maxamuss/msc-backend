@@ -1,0 +1,23 @@
+{
+    "model_name": "Book",
+    "fields": [
+        {
+            "field_name": "Book name",
+            "field_type": "text",
+            "required": true,
+            "help_text": "Name of the book",
+            "unique": false,
+            "choices": null,
+            "default": ""
+        },
+        {
+            "field_name": "Book bio",
+            "field_type": "text",
+            "required": true,
+            "help_text": "Name of the book",
+            "unique": false,
+            "choices": null,
+            "default": ""
+        }
+    ]
+}
