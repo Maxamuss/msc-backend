@@ -24,36 +24,37 @@ class SyntaxParser:
         For the given component, validate that is contains the required attributes and add the
         optional attributes with the default values.
         """
-        component_type = ComponentsType[component['component']]
-        component_config = component['config']
+        if not component['component'].startswith('core@'):
+            component_type = ComponentsType[component['component']]
+            component_config = component['config']
 
-        for attribute, config in COMPONENT_CONFIG[component_type].items():
-            # Attribute starting with an underscore are metadata about the component.
-            if attribute.startswith('_'):
-                continue
+            for attribute, config in COMPONENT_CONFIG[component_type].items():
+                # Attribute starting with an underscore are metadata about the component.
+                if attribute.startswith('_'):
+                    continue
 
-            component_value = component_config.get(attribute)
+                component_value = component_config.get(attribute)
 
-            if config['required'] or component_value:
-                # The config key is required or an optional config key has a value.
+                if config['required'] or component_value:
+                    # The config key is required or an optional config key has a value.
 
-                if not component_value:
-                    raise Exception(f'{attribute}: required attribute not provided')
+                    if not component_value:
+                        raise Exception(f'{attribute}: required attribute not provided')
 
-                # Make the component value a list (in the case it is a single value).
-                if not config['many']:
-                    component_value = [component_value]
+                    # Make the component value a list (in the case it is a single value).
+                    if not config['many']:
+                        component_value = [component_value]
 
-                for child in component_value:
-                    if config['type'] in ComponentsType:
-                        # Attribute type is a component.
-                        self.validate_component(child)
-                    else:
-                        # Attribute type is a string or dictionary.
-                        config['validator'](child)
-            else:
-                # An optional config key has not been given.
-                component_config[attribute] = config['default']
+                    for child in component_value:
+                        if config['type'] in ComponentsType:
+                            # Attribute type is a component.
+                            self.validate_component(child)
+                        else:
+                            # Attribute type is a string or dictionary.
+                            config['validator'](child)
+                else:
+                    # An optional config key has not been given.
+                    component_config[attribute] = config['default']
 
         # Ensure component has a unique id. UUIDs are used for this. If a component already has an
         # id, this should be used, unless a previous component already has that id. However, the
@@ -89,20 +90,21 @@ class SyntaxParser:
             self.validate_component(component)
 
             # Find if any stateless components have data fields.
-            if ComponentsType[component['component']] in STATELESS_COMPONENTS:
-                for attribute, value in component['config'].items():
-                    if isinstance(value, list):
-                        if attribute == 'fields':
-                            # Attribute is a list of model fields.
-                            for field in value:
-                                stateless_fields.append(field['field_name'].strip())
+            if not component['component'].startswith('core@'):
+                if ComponentsType[component['component']] in STATELESS_COMPONENTS:
+                    for attribute, value in component['config'].items():
+                        if isinstance(value, list):
+                            if attribute == 'fields':
+                                # Attribute is a list of model fields.
+                                for field in value:
+                                    stateless_fields.append(field['field_name'].strip())
+                            else:
+                                # Attribute is a list of children components.
+                                for child_component in value:
+                                    for child_value in child_component['config'].values():
+                                        stateless_fields += extract_fields(child_value)
                         else:
-                            # Attribute is a list of children components.
-                            for child_component in value:
-                                for child_value in child_component['config'].values():
-                                    stateless_fields += extract_fields(child_value)
-                    else:
-                        stateless_fields += extract_fields(value)
+                            stateless_fields += extract_fields(value)
 
         page['page_object_fields'] = list(set(stateless_fields))
 

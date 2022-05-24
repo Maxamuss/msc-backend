@@ -2,11 +2,14 @@ from enum import Enum
 
 
 class ComponentsType(Enum):
+    _component = '_component'
     button = 'button'
     header = 'header'
     form = 'form'
     table = 'table'
     tabs = 'tabs'
+    inline = 'inline'
+    column = 'column'
 
 
 class AttributeType(Enum):

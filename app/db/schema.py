@@ -2,8 +2,6 @@
 from django.db import connection
 from django.db.utils import ProgrammingError
 
-from layout.models import Page
-
 
 class ModelSchemaEditor:
     def __init__(self, initial_model=None):

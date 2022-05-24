@@ -1,4 +1,5 @@
 from .constants import AttributeType, ComponentsType
+from .generator import generate_button, generate_header
 from .validators import (
     validate_action,
     validate_form_field,
@@ -78,14 +79,7 @@ COMPONENT_CONFIG = {
             'label': 'Tools',
             'description': 'List of buttons to be rendered on the right of title',
             'frontend_default': [
-                {
-                    'component': 'button',
-                    'config': {
-                        'text': 'Header button',
-                        'uri': None,
-                        'icon': 'CursorClickIcon',
-                    },
-                }
+                generate_button('Header button', None, 'CursorClickIcon'),
             ],
         },
     },
@@ -101,7 +95,7 @@ COMPONENT_CONFIG = {
             'frontend_default': None,
         },
         'fields': {
-            'required': False,
+            'required': True,
             'type': AttributeType.form_field,
             'many': True,
             'validator': validate_form_field,
@@ -153,7 +147,7 @@ COMPONENT_CONFIG = {
             'frontend_default': None,
         },
         'fields': {
-            'required': False,
+            'required': True,
             'type': AttributeType.table_field,
             'many': True,
             'validator': validate_table_field,
@@ -178,27 +172,109 @@ COMPONENT_CONFIG = {
             'many': True,
             'validator': None,
             'default': [
-                {
-                    'component': 'button',
-                    'config': {
-                        'text': 'View',
-                        'uri': '${model}:edit:${id}',
-                        'icon': None,
-                    },
-                }
+                generate_button('View', '${model}:edit:${id}', None),
             ],
             'label': 'Row actions',
             'description': 'List of action buttons for each table row',
             'frontend_default': [
-                {
-                    'component': 'button',
-                    'config': {
-                        'text': 'View',
-                        'uri': '${model}:edit:${id}',
-                        'icon': None,
-                    },
-                }
+                generate_button('View', '${model}:edit:${id}', None),
             ],
+        },
+    },
+    ComponentsType.tabs: {
+        'tabs': {
+            'required': True,
+            'type': AttributeType.text,
+            'many': True,
+            'validator': validate_text,
+            'default': None,
+            'label': 'Tabs',
+            'description': 'Names of the tabs',
+            'frontend_default': ['Tab1', 'Tab2', 'Tab3'],
+        },
+        'panels': {
+            'required': True,
+            'type': ComponentsType._component,
+            'many': True,
+            'validator': None,
+            'default': None,
+            'label': 'Tab panels',
+            'description': 'Panel content for each tab',
+            'frontend_default': [
+                generate_header('Tab1 Panel', None, []),
+                generate_header('Tab2 Panel', None, []),
+                generate_header('Tab3 Panel', None, []),
+            ],
+        },
+    },
+    ComponentsType.inline: {
+        'model': {
+            'required': True,
+            'type': AttributeType.text,
+            'many': False,
+            'validator': validate_text,
+            'default': None,
+            'label': 'Table model',
+            'description': 'Model that this form is for',
+            'frontend_default': None,
+        },
+        'fields': {
+            'required': True,
+            'type': AttributeType.table_field,
+            'many': True,
+            'validator': validate_table_field,
+            'default': '__all__',
+            'label': 'Header fields',
+            'description': 'Header fields displayed in the inline',
+            'frontend_default': '__all__',
+        },
+        'related_model': {
+            'required': False,
+            'type': AttributeType.text,
+            'many': False,
+            'validator': validate_text,
+            'default': None,
+            'label': 'Related model filter',
+            'description': 'Related model to filter results on',
+            'frontend_default': None,
+        },
+        'actions': {
+            'required': False,
+            'type': ComponentsType.button,
+            'many': True,
+            'validator': None,
+            'default': [
+                generate_button('Edit', None, None),
+                generate_button('View', '${model}:edit:${id}', None),
+            ],
+            'label': 'Row actions',
+            'description': 'List of action buttons for each inline row',
+            'frontend_default': [
+                generate_button('Edit', None, None),
+                generate_button('View', '${model}:edit:${id}', None),
+            ],
+        },
+        'modal': {
+            'required': False,
+            'type': ComponentsType._component,
+            'many': False,
+            'validator': None,
+            'default': None,
+            'label': 'Modal',
+            'description': 'Modal displayed to edit or create a new model object',
+            'frontend_default': None,
+        },
+    },
+    ComponentsType.column: {
+        'children': {
+            'required': True,
+            'type': ComponentsType._component,
+            'many': True,
+            'validator': None,
+            'default': [],
+            'label': 'Column',
+            'description': 'Contain a vertical column of components',
+            'frontend_default': [],
         },
     },
 }
