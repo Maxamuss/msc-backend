@@ -38,11 +38,11 @@ class SyntaxParser:
                 # The config key is required or an optional config key has a value.
 
                 if not component_value:
-                    raise Exception('Required attribute not provided')
+                    raise Exception(f'{attribute}: required attribute not provided')
 
                 # Make the component value a list (in the case it is a single value).
                 if not config['many']:
-                    component_value = list(component_value)
+                    component_value = [component_value]
 
                 for child in component_value:
                     if config['type'] in ComponentsType:
@@ -50,7 +50,7 @@ class SyntaxParser:
                         self.validate_component(child)
                     else:
                         # Attribute type is a string or dictionary.
-                        config['validator'](component_value)
+                        config['validator'](child)
             else:
                 # An optional config key has not been given.
                 component_config[attribute] = config['default']
@@ -95,7 +95,7 @@ class SyntaxParser:
                         if attribute == 'fields':
                             # Attribute is a list of model fields.
                             for field in value:
-                                stateless_fields.append(field['field_name'])
+                                stateless_fields.append(field['field_name'].strip())
                         else:
                             # Attribute is a list of children components.
                             for child_component in value:

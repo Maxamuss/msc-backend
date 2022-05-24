@@ -12,6 +12,6 @@ def extract_fields(text):
 
     if isinstance(text, str):
         for matched_field in re.findall(FIELD_REGEX, text):
-            fields.append(matched_field)
+            fields.append(matched_field.strip())
 
     return fields

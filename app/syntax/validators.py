@@ -19,7 +19,7 @@ def validate_icon(text):
 
 
 def validate_action(action):
-    if action not in HTTPAction:
+    if action not in HTTPAction._member_names_:
         raise Exception()
 
 

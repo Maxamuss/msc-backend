@@ -3,6 +3,11 @@
 This app is responsible for loading an expire applications configuration from a directory of JSON
 files.
 
+## URIs
+
+`${model}` model the page is on
+`${id}` id of the model object. Could be from page or from form submission.
+
 ## Usage
 
 ```bash

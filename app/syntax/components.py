@@ -182,7 +182,7 @@ COMPONENT_CONFIG = {
                     'component': 'button',
                     'config': {
                         'text': 'View',
-                        'uri': '${model}:edit:${object_id}',
+                        'uri': '${model}:edit:${id}',
                         'icon': None,
                     },
                 }
@@ -194,7 +194,7 @@ COMPONENT_CONFIG = {
                     'component': 'button',
                     'config': {
                         'text': 'View',
-                        'uri': '${model}:edit:${object_id}',
+                        'uri': '${model}:edit:${id}',
                         'icon': None,
                     },
                 }

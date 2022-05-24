@@ -1,15 +1,1 @@
-{
-    "list": {
-        "load_resource": false,
-        "layout": [
-            {
-                "component": "header",
-                "config": {
-                    "title_text": "Groups",
-                    "subtitle_text": "",
-                    "tools": []
-                }
-            }
-        ]
-    }
-}
+{"list": {"layout": [{"component": "header", "config": {"title": "Groups", "subtitle": null, "tools": []}, "id": "7f313156-1131-42f1-9aed-94ec5e047968"}], "page_object_fields": []}}
