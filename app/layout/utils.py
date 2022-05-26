@@ -3,6 +3,9 @@ from typing import Dict, List, Optional
 
 from rest_framework.exceptions import ParseError
 
+from db.models import ModelSchema
+from layout.models import Page
+
 
 def get_page_layout(environment: str, resource: str, resource_type: str) -> Dict:
     if environment == 'developer':
@@ -17,7 +20,10 @@ def get_page_layout(environment: str, resource: str, resource_type: str) -> Dict
 
         # Get specific page in layout data.
         return model_layouts.get(resource_type, {})
-    return {}
+    else:
+        model_schema = ModelSchema.objects.get(name__iexact=resource)
+        page = Page.objects.get(model_schema=model_schema, page_name=resource_type)
+        return page.layout
 
 
 def find_component(layout: List, component_id: str) -> Optional[Dict]:

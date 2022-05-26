@@ -95,7 +95,7 @@ COMPONENT_CONFIG = {
             'frontend_default': None,
         },
         'fields': {
-            'required': True,
+            'required': False,
             'type': AttributeType.form_field,
             'many': True,
             'validator': validate_form_field,
@@ -147,7 +147,7 @@ COMPONENT_CONFIG = {
             'frontend_default': None,
         },
         'fields': {
-            'required': True,
+            'required': False,
             'type': AttributeType.table_field,
             'many': True,
             'validator': validate_table_field,

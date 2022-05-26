@@ -58,4 +58,5 @@ CELERY_TIMEZONE = 'Europe/London'
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
+    'http://dev.localhost:3000',
 ]

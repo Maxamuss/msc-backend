@@ -42,7 +42,7 @@ class SyntaxParser:
                         raise Exception(f'{attribute}: required attribute not provided')
 
                     # Make the component value a list (in the case it is a single value).
-                    if not config['many']:
+                    if not isinstance(component_value, list):
                         component_value = [component_value]
 
                     for child in component_value:

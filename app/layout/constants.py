@@ -1,6 +1,6 @@
 from enum import Enum
 
 
-class ApplicationTypes(Enum):
+class Environment(Enum):
     developer = 'developer'
     user = 'user'

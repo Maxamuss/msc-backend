@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 
 from db.models import FieldSchema, ModelSchema
 from db.serializer import ModelSchemaSerializer
-from layout.constants import ApplicationTypes
+from layout.constants import Environment
 from layout.utils import find_component, get_page_layout
 from .pagination import DataPagination
 
@@ -58,10 +58,21 @@ class LayoutAPIView(APIView):
 
             return Response(layout, status=status.HTTP_200_OK)
         else:
-            return Response(
-                {'detail': 'User skeleton not implemented'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            layout = {
+                'colors': {
+                    'primary': '#7e22ce',
+                    'secondary': '#7e22ce',
+                },
+                'sidebar': [
+                    {
+                        "section_name": "",
+                        "links": [
+                            {"name": "Books", "icon": "CollectionIcon", "uri": "book:list"},
+                        ],
+                    },
+                ],
+            }
+            return Response(layout)
 
     def get_page_layout(self, environment, resource, resource_type):
         layout = get_page_layout(environment, resource, resource_type)
@@ -76,7 +87,7 @@ class LayoutAPIView(APIView):
         if not environment:
             raise ParseError('environment parameter not supplied')
 
-        if environment not in ApplicationTypes._member_names_:
+        if environment not in Environment._member_names_:
             raise ParseError('Incorrect environment parameter supplied')
 
         if not resource:
