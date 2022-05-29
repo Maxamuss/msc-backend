@@ -156,6 +156,16 @@ COMPONENT_CONFIG = {
             'description': 'Header fields displayed in the table',
             'frontend_default': '__all__',
         },
+        'search_fields': {
+            'required': False,
+            'type': AttributeType.table_field,
+            'many': False,
+            'validator': validate_table_field,
+            'default': [],
+            'label': 'Search fields',
+            'description': 'Searchable fields in the table',
+            'frontend_default': [],
+        },
         'related_model': {
             'required': False,
             'type': AttributeType.text,

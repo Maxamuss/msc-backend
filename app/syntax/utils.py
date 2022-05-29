@@ -1,8 +1,11 @@
 import json
 import os
 
-from db.models import FieldSchema, ModelSchema
-from db.serializer import FieldSchemaSerializer, ModelSchemaSerializer
+
+def replace_syntax(syntax, old, new):
+    syntax_json = json.dumps(syntax)
+    syntax_json = syntax_json.replace(old, new)
+    return json.loads(syntax_json)
 
 
 def _read_file(file_path):
@@ -11,6 +14,9 @@ def _read_file(file_path):
 
 
 def load_model(model_config):
+    from db.models import FieldSchema, ModelSchema
+    from db.serializer import FieldSchemaSerializer, ModelSchemaSerializer
+
     model_data = {
         'name': model_config['model_name'],
     }

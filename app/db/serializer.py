@@ -1,8 +1,7 @@
-from django.contrib.contenttypes.models import ContentType
-
 from rest_framework import serializers
 
 from layout.models import Page
+from syntax.utils import replace_syntax
 from .constants import MODEL_DEFAULT_PAGES
 from .models import FieldSchema, ModelSchema
 
@@ -19,13 +18,13 @@ class ModelSchemaSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         model_schema = ModelSchema.objects.create(name=validated_data['name'])
 
-        model_content_type = ContentType.objects.get(model=model_schema._meta.model_name)
-
         for page_name, definition in MODEL_DEFAULT_PAGES.items():
+            # Replace ${model} with name of this model.
+            parsed_syntax = replace_syntax(definition, '${model}', model_schema.model_name_lower)
+
             Page.objects.create(
                 page_name=page_name,
-                layout=definition,
-                model=model_content_type,
+                layout=parsed_syntax,
                 model_schema=model_schema,
             )
 
@@ -33,7 +32,7 @@ class ModelSchemaSerializer(serializers.ModelSerializer):
 
 
 class FieldSchemaSerializer(serializers.ModelSerializer):
-    field_type = serializers.CharField(required=True)
+    field_type = serializers.CharField(required=True, write_only=True)
 
     class Meta:
         model = FieldSchema

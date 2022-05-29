@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from db.models import FieldSchema, ModelSchema
-from db.serializer import ModelSchemaSerializer
+from db.serializer import FieldSchemaSerializer, ModelSchemaSerializer
 from layout.constants import Environment
 from layout.utils import find_component, get_page_layout
 from .pagination import DataPagination
@@ -75,7 +75,7 @@ class LayoutAPIView(APIView):
             return Response(layout)
 
     def get_page_layout(self, environment, resource, resource_type):
-        layout = get_page_layout(environment, resource, resource_type)
+        layout = get_page_layout(environment, resource, resource_type, populate_all=True)
         return Response(layout, status=status.HTTP_200_OK)
 
     def parse_args(self) -> Tuple[str, str, str]:
@@ -124,6 +124,7 @@ class DataAPIView(APIView):
 
     overridden_serializers = {
         ModelSchema: ModelSchemaSerializer,
+        FieldSchema: FieldSchemaSerializer,
     }
 
     def method_setup(self) -> None:
@@ -163,7 +164,7 @@ class DataAPIView(APIView):
         try:
             model_schema = ModelSchema.objects.get(name__iexact=self.model_name)
             model = model_schema.as_model()
-            self.environment = 'developer'
+            self.environment = 'user'
         except ModelSchema.DoesNotExist:
             model_obj = get_object_or_404(ContentType.objects.all(), model=self.model_name)
             model = apps.get_model(model_obj.app_label, self.model_name)
@@ -300,9 +301,12 @@ class DataAPIView(APIView):
             component = find_component(layout.get('layout', []), self.component_id)
 
             if component:
-                fields = [
-                    x.get('field_name') for x in component.get('config', {}).get('fields', [])
-                ]
+                fields_attribute = component.get('config', {}).get('fields', [])
+
+                if fields_attribute != '__all__':
+                    fields = [x.get('field_name') for x in fields_attribute]
+                else:
+                    fields = all_fields
             else:
                 fields = all_fields
         else:
@@ -313,12 +317,12 @@ class DataAPIView(APIView):
 
         return fields
 
+    def get_serializer_context(self):
+        return {'request': self.request, 'format': self.format_kwarg, 'view': self}
+
     def get_serializer(self, *args, **kwargs):
         serializer_class = self.overridden_serializers.get(self.model, self.generic_serializer())
-        kwargs.setdefault(
-            'context',
-            {'request': self.request, 'format': self.format_kwarg, 'view': self},
-        )
+        kwargs.setdefault('context', self.get_serializer_context())
         return serializer_class(*args, **kwargs)
 
     def generic_serializer(self):

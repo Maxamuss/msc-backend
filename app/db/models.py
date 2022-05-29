@@ -57,6 +57,10 @@ class ModelSchema(BaseModel):
         return self.get_model_name(self.name)
 
     @property
+    def model_name_lower(self):
+        return self.get_model_name(self.name).lower()
+
+    @property
     def initial_model_name(self):
         return self.get_model_name(self._initial_name)
 

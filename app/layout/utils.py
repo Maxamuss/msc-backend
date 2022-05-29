@@ -5,9 +5,21 @@ from rest_framework.exceptions import ParseError
 
 from db.models import ModelSchema
 from layout.models import Page
+from syntax.utils import replace_syntax
 
 
-def get_page_layout(environment: str, resource: str, resource_type: str) -> Dict:
+def populate_all_fields(model_schema, layout):
+    all_fields = [
+        {'field_name': x.db_column, 'verbose_name': x.name} for x in model_schema.fields.all()
+    ]
+    all_fields_json = json.dumps(all_fields)
+
+    return replace_syntax(layout, '"__all__"', all_fields_json)
+
+
+def get_page_layout(
+    environment: str, resource: str, resource_type: str, populate_all: bool = False
+) -> Dict:
     if environment == 'developer':
         # Open layout file for model.
         try:
@@ -23,7 +35,14 @@ def get_page_layout(environment: str, resource: str, resource_type: str) -> Dict
     else:
         model_schema = ModelSchema.objects.get(name__iexact=resource)
         page = Page.objects.get(model_schema=model_schema, page_name=resource_type)
-        return page.layout
+        layout = page.layout
+
+        if populate_all:
+            # Component may have the __all__ value for the fields attribute. If this is the case,
+            # populate will all of the fields of the model.
+            return populate_all_fields(model_schema, layout)
+
+        return layout
 
 
 def find_component(layout: List, component_id: str) -> Optional[Dict]:
