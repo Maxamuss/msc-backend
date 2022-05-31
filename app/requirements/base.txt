@@ -5,6 +5,7 @@ celery==5.2.6
 
 django==4.0.4
 django-cors-headers==3.11.0
+django-mptt==0.13.4
 
 djangorestframework==3.13.1
 djangorestframework-simplejwt==5.1.0

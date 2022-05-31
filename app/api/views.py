@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model as DjangoModel
 from django.shortcuts import get_object_or_404
 
-from rest_framework import serializers, status
+from rest_framework import status
 from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,7 +15,13 @@ from rest_framework.views import APIView
 from db.models import FieldSchema, ModelSchema
 from db.serializer import FieldSchemaSerializer, ModelSchemaSerializer
 from layout.constants import Environment
+from layout.models import Page
+from layout.serializer import PageSerializer
 from layout.utils import find_component, get_page_layout
+from packages.models import Package
+from packages.serializer import PackageSerializer
+from workflows.models import Function, Workflow
+from workflows.serializer import FunctionSerializer, WorkflowSerializer
 from .pagination import DataPagination
 
 
@@ -99,9 +105,12 @@ class LayoutAPIView(APIView):
         return environment, resource, resource_type
 
 
-class DataAPIView(APIView):
+class DeveloperAPIView(APIView):
     """
-    API responsible for returning data for a specified model.
+    API responsible for handling actions made in the developer site.
+
+    This API view always takes in syntax created on the frontend and manages the version control as
+    well as the validation.
 
     Defines the following views:
         - list:   GET       /data/?model=${model}&page=${page}
@@ -122,9 +131,13 @@ class DataAPIView(APIView):
     to use in serialization.
     """
 
-    overridden_serializers = {
+    serializers = {
         ModelSchema: ModelSchemaSerializer,
         FieldSchema: FieldSchemaSerializer,
+        Page: PageSerializer,
+        Package: PackageSerializer,
+        Workflow: WorkflowSerializer,
+        Function: FunctionSerializer,
     }
 
     def method_setup(self) -> None:
@@ -321,14 +334,6 @@ class DataAPIView(APIView):
         return {'request': self.request, 'format': self.format_kwarg, 'view': self}
 
     def get_serializer(self, *args, **kwargs):
-        serializer_class = self.overridden_serializers.get(self.model, self.generic_serializer())
+        serializer_class = self.serializers.get(self.model, self.generic_serializer())
         kwargs.setdefault('context', self.get_serializer_context())
         return serializer_class(*args, **kwargs)
-
-    def generic_serializer(self):
-        class GenericSerializer(serializers.ModelSerializer):
-            class Meta:
-                model = self.model
-                fields = self.get_model_fields
-
-        return GenericSerializer

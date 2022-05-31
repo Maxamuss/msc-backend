@@ -29,12 +29,12 @@ INSTALLED_APPS = [
     # 3rd Party
     'rest_framework',
     'corsheaders',
+    'mptt',
     # Local
     'api',
     'core',
     'db',
     'accounts',
-    'functions',
     'layout',
     'packages',
     'syntax',
