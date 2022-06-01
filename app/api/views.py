@@ -1,28 +1,25 @@
 import json
-from functools import cached_property
 from typing import Optional, Tuple
+from uuid import UUID
 
-from django.apps import apps
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model as DjangoModel
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
 
 from db.models import FieldSchema, ModelSchema
-from db.serializer import FieldSchemaSerializer, ModelSchemaSerializer
 from layout.constants import Environment
 from layout.models import Page
-from layout.serializer import PageSerializer
-from layout.utils import find_component, get_page_layout
+from layout.utils import get_page_layout
 from packages.models import Package
-from packages.serializer import PackageSerializer
+from syntax.models import Release, ReleaseChange
+from syntax.serializers import ReleaseSerializer
 from workflows.models import Function, Workflow
-from workflows.serializer import FunctionSerializer, WorkflowSerializer
-from .pagination import DataPagination
 
 
 class LayoutAPIView(APIView):
@@ -111,77 +108,45 @@ class DeveloperAPIView(APIView):
 
     This API view always takes in syntax created on the frontend and manages the version control as
     well as the validation.
-
-    Defines the following views:
-        - list:   GET       /data/?model=${model}&page=${page}
-        - create: POST      /data/?model=${model}&page=${page}
-        - detail: GET       /data/?model=${model}:${id}&page=${page}
-        - update: PUT/PATCH /data/?model=${model}:${id}&page=${page}
-        - delete: DELETE    /data/?model=${model}:${id}&page=${page}
-
-    `model` arg must be passed to tell the view which model and optionally the object is being used.
-
-    `page` arg must also be supplied to tell the view which page is being requested from.
-
-    `related_model` arg can optionally be passed to filter the query. This is formatted as a model
-    with a object id - ${related_model}:${related_model_id}
-
-    `component` arg can optionally be passed which tell the view which component (id) made the request.
-    This is used for example by the table and form components as they need to now which fields
-    to use in serialization.
     """
 
-    serializers = {
-        ModelSchema: ModelSchemaSerializer,
-        FieldSchema: FieldSchemaSerializer,
-        Page: PageSerializer,
-        Package: PackageSerializer,
-        Workflow: WorkflowSerializer,
-        Function: FunctionSerializer,
+    model_name_mapping = {
+        ModelSchema._meta.model_name: ModelSchema,
+        FieldSchema._meta.model_name: FieldSchema,
+        Page._meta.model_name: Page,
+        Package._meta.model_name: Package,
+        Workflow._meta.model_name: Workflow,
+        Function._meta.model_name: Function,
     }
 
-    def method_setup(self) -> None:
-        self.model_name, self.model_id = self.parse_model_arg()
-        self.model = self.get_model_class()
+    @property
+    def model_name(self) -> str:
+        return self.kwargs.get('model')
 
-        self.page = self.parse_page_arg()
-        self.related_model, self.related_model_id = self.parse_related_model_arg()
-        self.component_id = self.parse_component_arg()
+    @property
+    def object_id(self) -> Optional[UUID]:
+        return self.kwargs.get('object_id')
 
-    def parse_model_arg(self) -> Tuple[str, Optional[str]]:
-        model = self.request.query_params['model']
+    @property
+    def release(self) -> Release:
+        release_version = self.request.query_params.get('release_version')
 
-        colon_count = model.count(':')
+        if release_version:
+            release = Release.objects.filter(current_release=True).first()
 
-        if colon_count == 0:
-            return model, None
-        elif colon_count == 1:
-            return model.split(':')
+            if not release:
+                raise Exception('Release version not found.')
         else:
-            raise ParseError('model parameter format incorrect')
+            release = Release.objects.order_by('-released_at').first()
 
-    def parse_page_arg(self) -> str:
-        return self.request.query_params['page']
+        return release
 
-    def parse_related_model_arg(self) -> Tuple[Optional[str], Optional[str]]:
-        related_model = self.request.query_params.get('related_model')
+    @property
+    def model(self) -> DjangoModel:
+        model = self.model_name_mapping.get(self.model_name)
 
-        if related_model and related_model.count(':') == 1:
-            return related_model.split(':')
-        return None, None
-
-    def parse_component_arg(self) -> Optional[str]:
-        return self.request.query_params.get('component')
-
-    def get_model_class(self) -> DjangoModel:
-        try:
-            model_schema = ModelSchema.objects.get(name__iexact=self.model_name)
-            model = model_schema.as_model()
-            self.environment = 'user'
-        except ModelSchema.DoesNotExist:
-            model_obj = get_object_or_404(ContentType.objects.all(), model=self.model_name)
-            model = apps.get_model(model_obj.app_label, self.model_name)
-            self.environment = 'developer'
+        if not model:
+            raise Exception('Incorrect model passed.')
 
         return model
 
@@ -190,21 +155,15 @@ class DeveloperAPIView(APIView):
     # ---------------------------------------------------------------------------------------------
 
     def get(self, *args, **kwargs):
-        self.method_setup()
-
-        if self.model_id:
+        if self.object_id:
             return self.detail()
         return self.list()
 
     def post(self, *args, **kwargs):
-        self.method_setup()
-
         return self.create()
 
     def put(self, *args, **kwargs):
-        self.method_setup()
-
-        if self.model_id:
+        if self.object_id:
             return self.update()
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -213,9 +172,7 @@ class DeveloperAPIView(APIView):
         return self.put(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        self.method_setup()
-
-        if self.model_id:
+        if self.object_id:
             return self.destroy()
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -225,41 +182,36 @@ class DeveloperAPIView(APIView):
     # ---------------------------------------------------------------------------------------------
 
     def list(self):
-        queryset = self.get_queryset()
-        paginator = DataPagination()
-        page = paginator.paginate_queryset(queryset, self.request, view=self)
-        serializer = self.get_serializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        """
+        This method returns all of the syntax definitions for a model from the current release.
+        """
+        data = self.release.get_all_syntax_definitions(self.model_name)
+        return Response(data)
 
     def detail(self):
-        resource = self.get_object()
-        serializer = self.get_serializer(resource)
-        return Response(serializer.data)
+        """
+        This method returns the syntax for a model from the current release.
+        """
+        data = self.release.get_syntax_definition(self.model_name, self.object_id)
+        return Response(data)
 
     def create(self):
-        serializer = self.get_serializer(data=self.request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        """
+        This method takes a syntax definition, validates it and adds it as a ReleaseChange.
+        """
+        return self.create_release(ReleaseChange.ChangeType.CREATE)
 
     def update(self):
-        partial = self.request.method.lower() == 'patch'
-        resource = self.get_object()
-        serializer = self.get_serializer(resource, data=self.request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        if getattr(resource, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            resource._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
+        """
+        This method takes a syntax definition, validates it and adds it as a ReleaseChange.
+        """
+        return self.create_release(ReleaseChange.ChangeType.UPDATE)
 
     def destroy(self):
-        resource = self.get_object()
-        resource.delete()
-        return Response()
+        """
+        This method takes a syntax definition, validates it and adds it as a ReleaseChange.
+        """
+        return self.create_release(ReleaseChange.ChangeType.DELETE)
 
     # ---------------------------------------------------------------------------------------------
     # Util methods
@@ -298,42 +250,59 @@ class DeveloperAPIView(APIView):
     def queryset_ordering(self, queryset):
         return queryset.order_by('-created_at')
 
-    @cached_property
-    def get_model_fields(self):
-        """
-        If the component query parameter is passed, get the component and its defined fields
-        otherwise get the page_object_fields from the page.
-        """
-        all_fields = '__all__'
+    def create_release(self, change_type):
+        try:
+            ReleaseChange.objects.create(
+                release=self.release,
+                change_type=change_type,
+                model_type=self.model_name,
+                object_id=self.object_id,
+                syntax_json=self.request.DATA,
+            )
+        except Exception:
+            pass
 
-        # Component will be in related model layout.
-        model_name = self.related_model or self.model_name
-        layout = get_page_layout(self.environment, model_name, self.page)
+        return Response({}, status=status.HTTP_200_OK)
 
-        if self.component_id:
-            component = find_component(layout.get('layout', []), self.component_id)
 
-            if component:
-                fields_attribute = component.get('config', {}).get('fields', [])
+class ReleaseAPIView(ViewSet):
+    """
+    API view to manage the releases for the application.
 
-                if fields_attribute != '__all__':
-                    fields = [x.get('field_name') for x in fields_attribute]
-                else:
-                    fields = all_fields
-            else:
-                fields = all_fields
+    list: get release tree.
+    retrieve: get release model instance.
+    publish: publish the current ReleaseChanges as a new Release.
+    destroy: delete a release and all child releases.
+    """
+
+    serializer_class = ReleaseSerializer
+
+    def list(self, request):
+        queryset = Release.objects.all().only(
+            'release_version',
+            'release_notes',
+            'released_at',
+            'released_by',
+            'parent',
+        )
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        queryset = Release.objects.all()
+        release = get_object_or_404(queryset, pk=pk)
+        serializer = self.serializer_class(release)
+        return Response(serializer.data)
+
+    def destroy(self, request, pk=None):
+        instance = self.get_object()
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['post'])
+    def publish(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            return Response({})
         else:
-            fields = layout.get('page_object_fields', all_fields)
-
-        if isinstance(fields, list) and 'id' not in fields:
-            fields.append('id')
-
-        return fields
-
-    def get_serializer_context(self):
-        return {'request': self.request, 'format': self.format_kwarg, 'view': self}
-
-    def get_serializer(self, *args, **kwargs):
-        serializer_class = self.serializers.get(self.model, self.generic_serializer())
-        kwargs.setdefault('context', self.get_serializer_context())
-        return serializer_class(*args, **kwargs)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
