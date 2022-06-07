@@ -162,6 +162,10 @@ class Release(MPTTModel):
             return {field: syntax[field] for field in fields}
         return syntax
 
+    @classmethod
+    def get_current_release(cls):
+        return cls.objects.get(current_release=True)
+
 
 class ReleaseChange(BaseModel):
     """

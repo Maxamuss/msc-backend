@@ -313,8 +313,9 @@ class ReleaseAPIView(ViewSet):
 
     @action(detail=False, methods=['post'])
     def publish(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
-            return Response({})
+            release = serializer.save()
+            return Response(release.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
