@@ -1,4 +1,5 @@
 import uuid
+from typing import List, Optional
 
 from django.db import models
 
@@ -34,18 +35,18 @@ class Release(MPTTModel):
     release_notes = models.TextField()
     released_at = models.DateTimeField(auto_now_add=True)
     released_by = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True)
-    current_release = models.BooleanField(default=False)
+    current_release = models.BooleanField(default=False, editable=False)
 
     parent = TreeForeignKey(
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='children'
     )
 
     # Stores the syntax for all models for this release.
-    modelschemas = models.JSONField(default=list)
-    pages = models.JSONField(default=list)
-    packages = models.JSONField(default=list)
-    workflows = models.JSONField(default=list)
-    functions = models.JSONField(default=list)
+    modelschemas = models.JSONField(default=list, blank=True)
+    pages = models.JSONField(default=list, blank=True)
+    packages = models.JSONField(default=list, blank=True)
+    workflows = models.JSONField(default=list, blank=True)
+    functions = models.JSONField(default=list, blank=True)
 
     field_mappings = {
         ModelSchema._meta.model_name: 'modelschemas',
@@ -58,35 +59,12 @@ class Release(MPTTModel):
     def __str__(self):
         return self.release_version
 
-    def _apply_changes(self, syntax, changes):
-        for change in changes:
-            if change.model_type in syntax.keys():
-                model_syntax = syntax[change.model_type]
-
-                # Add id if does not already have one.
-                if not change.object_id:
-                    model_ids = [x['id'] for x in syntax[change.model_type]]
-                    object_id = str(uuid.uuid4())
-                    while object_id in model_ids or not object_id:
-                        object_id = str(uuid.uuid4())
-                    change.syntax_json['id'] = object_id
-
-                if change.change_type == ReleaseChangeType.CREATE:
-                    syntax[change.model_type].append(change.syntax_json)
-                elif change.change_type == ReleaseChangeType.UPDATE:
-                    syntax[change.model_type] = [
-                        x for x in syntax[change.model_type] if x['id'] != str(change.object_id)
-                    ]
-                    change.syntax_json['id'] = str(change.object_id)
-                    syntax[change.model_type].append(change.syntax_json)
-                elif change.change_type == ReleaseChangeType.DELETE:
-                    syntax[change.model_type] = [
-                        x for x in syntax[change.model_type] if x['id'] != str(change.object_id)
-                    ]
-        return syntax
-
     def save(self, *args, **kwargs):
-        changes = None
+        """
+        When a Release is created, we need to pull in all of the changes, merge it with the last
+        parent Releases' syntax and add it to the model.
+        """
+        release_changes = None
 
         if self.parent:
             syntax = {
@@ -96,22 +74,59 @@ class Release(MPTTModel):
                 Workflow._meta.model_name: self.parent.workflows,
                 Function._meta.model_name: self.parent.functions,
             }
-            changes = self.parent.staged_changes.filter(release__isnull=True)
+            # ReleaseChanges without a release FK have not been merged into their own release yet.
+            release_changes = self.parent.staged_changes.filter(release__isnull=True)
 
-            merged_syntax = self._apply_changes(syntax, changes)
+            # Merge the parent Release syntax with the current changes.
+            merged_syntax = self._apply_changes(syntax, release_changes)
 
+            # Add the merged syntax to the correct field on this model.
             for key, field in self.field_mappings.items():
                 setattr(self, field, merged_syntax[key])
 
+        # Use update to not call this save method on the other Releases.
         Release.objects.all().update(current_release=False)
+
+        # Set this release as the current release. Ensures there is always only 1 current release.
         self.current_release = True
 
         super().save(*args, **kwargs)
 
-        if changes:
-            changes.update(release=self)
+        # For the ReleaseChanges that have been merged into this Release, set their release FK to
+        # this Release so that they are marked are merged. This must be done after super so that it
+        # is ensured that this model has been created.
+        if release_changes:
+            release_changes.update(release=self)
 
-    def get_all_syntax_definitions(self, model_name: str) -> list:
+    def _apply_changes(self, syntax, changes):
+        """
+        For each ReleaseChange requiring to be merged, modify the parent Release's syntax.
+        """
+        for change in changes:
+            # Validates incoming syntax from frontend and prevents storing of unnecessary data.
+            if change.model_type in syntax.keys():
+                object_id = str(change.object_id)
+
+                if change.change_type == ReleaseChangeType.CREATE:
+                    # Add resource to syntax.
+                    syntax[change.model_type].append(change.syntax_json)
+                elif change.change_type == ReleaseChangeType.UPDATE:
+                    # Remove parent resource  syntax and add updated resource syntax.
+                    syntax[change.model_type] = [
+                        obj for obj in syntax[change.model_type] if obj['id'] != object_id
+                    ]
+                    syntax[change.model_type].append(change.syntax_json)
+                elif change.change_type == ReleaseChangeType.DELETE:
+                    # Remove parent resource from syntax.
+                    syntax[change.model_type] = [
+                        x for x in syntax[change.model_type] if x['id'] != object_id
+                    ]
+
+        return syntax
+
+    def get_all_syntax_definitions(
+        self, model_name: str, fields: Optional[List[str]] = None
+    ) -> list:
         """
         This method returns the all of the syntax definitions for a given model. However, a release
         only contains the current committed changes to an application. This means there may exist
@@ -120,18 +135,32 @@ class Release(MPTTModel):
         syntax = {model_name: getattr(self, self.field_mappings[model_name])}
         changes = self.staged_changes.all()
 
-        merged_syntax = self._apply_changes(syntax, changes)
+        merged_syntax = self._apply_changes(syntax, changes)[model_name]
 
-        return merged_syntax[model_name]
+        if fields:
+            return [self._extract_fields(syntax_object, fields) for syntax_object in merged_syntax]
+        return merged_syntax
 
-    def get_syntax_definition(self, model_name: str, object_id: uuid.UUID) -> dict:
+    def get_syntax_definition(
+        self, model_name: str, object_id: uuid.UUID, fields: Optional[List[str]] = None
+    ) -> dict:
         found_syntaxes = [
             x for x in self.get_all_syntax_definitions(model_name) if x['id'] == str(object_id)
         ]
 
         if found_syntaxes:
-            return found_syntaxes[0]
+            syntax = found_syntaxes[0]
+
+            return self._extract_fields(syntax, fields)
         return {}
+
+    def _extract_fields(self, syntax: dict, fields: Optional[List[str]]):
+        if fields:
+            if 'id' not in fields:
+                fields.insert(0, 'id')
+
+            return {field: syntax[field] for field in fields}
+        return syntax
 
 
 class ReleaseChange(BaseModel):
@@ -147,6 +176,9 @@ class ReleaseChange(BaseModel):
 
     This model only stores the change to a particular part of the model. Therefore, it specifies
     the action (create, update or delete) that is being made to that section of the syntax.
+
+    In the case of a creation, there is no object_id. Therefore, the object_id is generated and
+    added to the syntax.
     """
 
     parent_release = models.ForeignKey(
@@ -163,18 +195,27 @@ class ReleaseChange(BaseModel):
     change_type = models.CharField(max_length=10, choices=ReleaseChangeType.choices)
 
     model_type = models.CharField(max_length=30)
-    object_id = models.UUIDField(editable=False, null=True)
+    object_id = models.UUIDField(editable=False)
 
     syntax_json = models.JSONField()
 
     def __str__(self):
         return f'{self.change_type} {self.model_type} {self.object_id}'
 
+    def save(self, *args, **kwargs):
+        # self.full_clean()
+
+        # Generate object_id (if required).
+        if not self.object_id:
+            # TODO: check unique.
+            self.object_id = uuid.uuid4()
+
+        if 'id' not in self.syntax_json:
+            self.syntax_json['id'] = str(self.object_id)
+
+        super().save(*args, **kwargs)
+
     # def clean(self, *args, **kwargs):
     #     # Validate the JSON syntax.
 
     #     super().clean(*args, **kwargs)
-
-    # def save(self, *args, **kwargs):
-    #     self.full_clean()
-    #     super().save(*args, **kwargs)

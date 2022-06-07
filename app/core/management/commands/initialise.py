@@ -7,7 +7,15 @@ from syntax.models import Release, ReleaseChange, ReleaseChangeType
 
 data = {
     'modelschema': [
-        {'model_name': 'Book', 'fields': []},
+        {
+            'model_name': 'Book',
+            'fields': [],
+        },
+    ],
+    # 'page': [{'page_name': 'list'}, {'page_name': 'create'}],
+    'function': [
+        {'function_name': 'Send Email'},
+        {'function_name': 'Export as CSV'},
     ],
 }
 
@@ -47,6 +55,7 @@ class Command(BaseCommand):
         #     model_type='modelschema',
         #     syntax_json={},
         # )
+        # print(second_release.modelschemas)
         ReleaseChange.objects.create(
             parent_release=second_release,
             change_type=ReleaseChangeType.UPDATE,

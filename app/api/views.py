@@ -17,7 +17,7 @@ from layout.constants import Environment
 from layout.models import Page
 from layout.utils import get_page_layout
 from packages.models import Package
-from syntax.models import Release, ReleaseChange
+from syntax.models import Release, ReleaseChange, ReleaseChangeType
 from syntax.serializers import ReleaseSerializer
 from workflows.models import Function, Workflow
 
@@ -128,6 +128,15 @@ class DeveloperAPIView(APIView):
         return self.kwargs.get('object_id')
 
     @property
+    def model(self) -> DjangoModel:
+        model = self.model_name_mapping.get(self.model_name)
+
+        if not model:
+            raise Exception('Incorrect model passed.')
+
+        return model
+
+    @property
     def release(self) -> Release:
         release_version = self.request.query_params.get('release_version')
 
@@ -142,13 +151,8 @@ class DeveloperAPIView(APIView):
         return release
 
     @property
-    def model(self) -> DjangoModel:
-        model = self.model_name_mapping.get(self.model_name)
-
-        if not model:
-            raise Exception('Incorrect model passed.')
-
-        return model
+    def fields(self):
+        return self.request.query_params.getlist('fields', [])
 
     # ---------------------------------------------------------------------------------------------
     # HTTP methods
@@ -185,33 +189,39 @@ class DeveloperAPIView(APIView):
         """
         This method returns all of the syntax definitions for a model from the current release.
         """
-        data = self.release.get_all_syntax_definitions(self.model_name)
+        data = self.release.get_all_syntax_definitions(self.model_name, fields=self.fields)
         return Response(data)
 
     def detail(self):
         """
         This method returns the syntax for a model from the current release.
         """
-        data = self.release.get_syntax_definition(self.model_name, self.object_id)
+        print('detail')
+        data = self.release.get_syntax_definition(
+            self.model_name, self.object_id, fields=self.fields
+        )
         return Response(data)
 
     def create(self):
         """
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
-        return self.create_release(ReleaseChange.ChangeType.CREATE)
+        self.create_release(ReleaseChangeType.CREATE)
+        return Response({}, status=status.HTTP_200_OK)
 
     def update(self):
         """
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
-        return self.create_release(ReleaseChange.ChangeType.UPDATE)
+        self.create_release(ReleaseChangeType.UPDATE)
+        return Response({}, status=status.HTTP_200_OK)
 
     def destroy(self):
         """
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
-        return self.create_release(ReleaseChange.ChangeType.DELETE)
+        self.create_release(ReleaseChangeType.DELETE)
+        return Response({}, status=status.HTTP_200_OK)
 
     # ---------------------------------------------------------------------------------------------
     # Util methods
@@ -251,18 +261,18 @@ class DeveloperAPIView(APIView):
         return queryset.order_by('-created_at')
 
     def create_release(self, change_type):
-        try:
-            ReleaseChange.objects.create(
-                release=self.release,
-                change_type=change_type,
-                model_type=self.model_name,
-                object_id=self.object_id,
-                syntax_json=self.request.DATA,
-            )
-        except Exception:
-            pass
+        ReleaseChange.objects.create(
+            parent_release=self.release,
+            change_type=change_type,
+            model_type=self.model_name,
+            object_id=self.object_id,
+            syntax_json=self.request.data,
+        )
 
-        return Response({}, status=status.HTTP_200_OK)
+    # try:
+    # except Exception as e:
+    #     print(e)
+    #     return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ReleaseAPIView(ViewSet):
