@@ -279,10 +279,12 @@ class ReleaseAPIView(ViewSet):
 
     def list(self, request):
         queryset = Release.objects.all().only(
+            'id',
             'release_version',
             'release_notes',
             'released_at',
             'released_by',
+            'current_release',
             'parent',
         )
         serializer = self.serializer_class(queryset, many=True)
