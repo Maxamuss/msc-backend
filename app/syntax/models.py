@@ -152,10 +152,10 @@ class Release(MPTTModel):
                     syntax[change.model_type].append(change.syntax_json)
                 elif change.change_type == ReleaseChangeType.UPDATE:
                     # Remove parent resource  syntax and add updated resource syntax.
-                    syntax[change.model_type] = [
-                        obj for obj in syntax[change.model_type] if obj['id'] != object_id
-                    ]
-                    syntax[change.model_type].append(change.syntax_json)
+                    objs = [obj for obj in syntax[change.model_type] if obj['id'] != object_id]
+                    if objs:
+                        obj = objs[0]
+                        obj.update(change.syntax_json)
                 elif change.change_type == ReleaseChangeType.DELETE:
                     # Remove parent resource from syntax.
                     syntax[change.model_type] = [
@@ -238,6 +238,7 @@ class ReleaseChange(BaseModel):
         on_delete=models.CASCADE,
         related_name='committed_changed',
         null=True,
+        blank=True,
     )
     change_type = models.CharField(max_length=10, choices=ReleaseChangeType.choices)
 

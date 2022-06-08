@@ -9,7 +9,10 @@ data = {
     'modelschema': [
         {
             'model_name': 'Book',
-            'fields': [],
+            'fields': [
+                {'field_name': 'book_name', 'field_type': 'text', 'required': True},
+                {'field_name': 'author', 'field_type': 'text', 'required': True},
+            ],
         },
     ],
     'function': [

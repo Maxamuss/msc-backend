@@ -4,6 +4,8 @@ from .models import Release
 
 
 class ReleaseSerializer(serializers.ModelSerializer):
+    unapplied_changes = serializers.SerializerMethodField()
+
     class Meta:
         model = Release
         fields = [
@@ -14,12 +16,16 @@ class ReleaseSerializer(serializers.ModelSerializer):
             'released_by',
             'current_release',
             'parent',
+            'unapplied_changes',
         ]
         extra_kwargs = {
             'released_by': {'read_only': True},
             'current_release': {'read_only': True},
             'parent': {'read_only': True},
         }
+
+    def get_unapplied_changes(self, obj):
+        return obj.staged_changes.filter(release__isnull=True).count()
 
     def validate(self, data):
         """

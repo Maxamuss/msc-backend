@@ -208,7 +208,6 @@ class DeveloperAPIView(APIView):
         """
         This method returns the syntax for a model from the current release.
         """
-        print('detail')
         data = self.release.get_syntax_definition(self.model_name, self.object_id, self.filters)
         return Response(data)
 
@@ -216,15 +215,17 @@ class DeveloperAPIView(APIView):
         """
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
-        self.create_release(ReleaseChangeType.CREATE)
-        return Response({}, status=status.HTTP_200_OK)
+        object_id = self.create_release(ReleaseChangeType.CREATE)
+        schema = self.release.get_syntax_definition(self.model_name, object_id, self.filters)
+        return Response(schema, status=status.HTTP_200_OK)
 
     def update(self):
         """
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
         self.create_release(ReleaseChangeType.UPDATE)
-        return Response({}, status=status.HTTP_200_OK)
+        schema = self.release.get_syntax_definition(self.model_name, self.object_id, self.filters)
+        return Response(schema, status=status.HTTP_200_OK)
 
     def destroy(self):
         """
@@ -237,47 +238,31 @@ class DeveloperAPIView(APIView):
     # Util methods
     # ---------------------------------------------------------------------------------------------
 
-    def get_object(self):
-        return get_object_or_404(self.get_base_queryset(), id=self.model_id)
-
-    def get_base_queryset(self):
-        return self.model.objects.all()
-
-    def get_queryset(self):
-        queryset = self.get_base_queryset()
-        queryset = self.queryset_related_filter(queryset)
-        queryset = self.queryset_only_fields(queryset)
-        queryset = self.queryset_ordering(queryset)
-        return queryset
-
-    def queryset_related_filter(self, queryset):
-        """
-        Filter the queryset if the related model parameter is passed.
-        """
-        model_schema_mapping = {'modelschema': 'model_schema'}
-
-        if self.related_model and self.related_model_id:
-            filter_name = model_schema_mapping.get(self.related_model, self.related_model)
-            queryset = queryset.filter(**{filter_name: self.related_model_id})
-        return queryset
-
-    def queryset_only_fields(self, queryset):
-        if not self.model == FieldSchema:
-            if isinstance(self.get_model_fields, list):
-                return queryset.only(*self.get_model_fields)
-        return queryset
-
-    def queryset_ordering(self, queryset):
-        return queryset.order_by('-created_at')
-
     def create_release(self, change_type):
-        ReleaseChange.objects.create(
+        # Check if there is already a ReleaseChange.
+        release_change = ReleaseChange.objects.filter(
             parent_release=self.release,
-            change_type=change_type,
             model_type=self.model_name,
             object_id=self.object_id,
-            syntax_json=self.request.data,
-        )
+        ).first()
+
+        if release_change:
+            if release_change.change_type != ReleaseChangeType.DELETE:
+                for key, value in self.request.data.items():
+                    if key.lower() != 'id':
+                        release_change.syntax_json[key] = value
+
+                release_change.save()
+        else:
+            release_change = ReleaseChange.objects.create(
+                parent_release=self.release,
+                change_type=change_type,
+                model_type=self.model_name,
+                object_id=self.object_id,
+                syntax_json=self.request.data,
+            )
+
+        return release_change.object_id
 
 
 class ReleaseAPIView(ViewSet):
