@@ -36,6 +36,7 @@ class ReleaseSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         current_release = Release.get_current_release()
+
         return Release.objects.create(
             parent=current_release,
             release_version=validated_data['release_version'],

@@ -19,6 +19,28 @@ class ReleaseChangeType(models.TextChoices):
     DELETE = 'delete'
 
 
+class ReleaseSyntax(BaseModel):
+    """
+    Rather than store the each syntax JSON as a unique field on the Release model, it is stored
+    here instead.
+    """
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['release', 'model_type'], name='unique_release_syntax_type'
+            )
+        ]
+
+    release = models.ForeignKey(
+        'syntax.Release',
+        on_delete=models.CASCADE,
+        related_name='syntax',
+    )
+    model_type = models.CharField(max_length=30)
+    syntax_json = models.JSONField(default=list, blank=True)
+
+
 class Release(MPTTModel):
     """
     This model stores an application version release. When a developer makes changes to their
@@ -42,11 +64,11 @@ class Release(MPTTModel):
     )
 
     # Stores the syntax for all models for this release.
-    modelschemas = models.JSONField(default=list, blank=True)
-    pages = models.JSONField(default=list, blank=True)
-    packages = models.JSONField(default=list, blank=True)
-    workflows = models.JSONField(default=list, blank=True)
-    functions = models.JSONField(default=list, blank=True)
+    # modelschemas = models.JSONField(default=list, blank=True)
+    # pages = models.JSONField(default=list, blank=True)
+    # packages = models.JSONField(default=list, blank=True)
+    # workflows = models.JSONField(default=list, blank=True)
+    # functions = models.JSONField(default=list, blank=True)
 
     field_mappings = {
         ModelSchema._meta.model_name: 'modelschemas',
@@ -63,42 +85,60 @@ class Release(MPTTModel):
         """
         When a Release is created, we need to pull in all of the changes, merge it with the last
         parent Releases' syntax and add it to the model.
+
+        Then, the changes are applied to the models.
         """
-        release_changes = None
-
-        if self.parent:
-            syntax = {
-                ModelSchema._meta.model_name: self.parent.modelschemas,
-                Page._meta.model_name: self.parent.pages,
-                Package._meta.model_name: self.parent.packages,
-                Workflow._meta.model_name: self.parent.workflows,
-                Function._meta.model_name: self.parent.functions,
-            }
-            # ReleaseChanges without a release FK have not been merged into their own release yet.
-            release_changes = self.parent.staged_changes.filter(release__isnull=True)
-
-            # Merge the parent Release syntax with the current changes.
-            merged_syntax = self._apply_changes(syntax, release_changes)
-
-            # Add the merged syntax to the correct field on this model.
-            for key, field in self.field_mappings.items():
-                setattr(self, field, merged_syntax[key])
-
-        # Use update to not call this save method on the other Releases.
-        Release.objects.all().update(current_release=False)
-
-        # Set this release as the current release. Ensures there is always only 1 current release.
-        self.current_release = True
+        is_new = self.pk is None
 
         super().save(*args, **kwargs)
 
-        # For the ReleaseChanges that have been merged into this Release, set their release FK to
-        # this Release so that they are marked are merged. This must be done after super so that it
-        # is ensured that this model has been created.
-        if release_changes:
-            release_changes.update(release=self)
+        if self.parent and is_new:
+            # ReleaseChanges without a release FK have not been merged into their own release yet.
+            release_changes = self.parent.staged_changes.filter(release__isnull=True)
 
-    def _apply_changes(self, syntax, changes):
+            syntax = {
+                model_type: self._get_release_syntax(model_type, release=self.parent)
+                for model_type in self.field_mappings.keys()
+            }
+
+            # Merge the parent Release syntax with the current changes.
+            merged_syntax = self._merge_changes(syntax, release_changes)
+
+            # Set this release as current all other releases as no current. Use update to not call
+            # the model save method on the other Releases. Ensures there is always only 1 current
+            # release at a time.
+            Release.objects.all().update(current_release=False)
+            Release.objects.filter(id=self.id).update(current_release=True)
+
+            # For the ReleaseChanges that have been merged into this Release, set their release FK
+            # to this Release so that they are marked are merged. Also create a ReleaseSyntax for
+            # the merged syntax.
+            if release_changes:
+                for model_type, syntax_json in merged_syntax.items():
+                    ReleaseSyntax.objects.create(
+                        release=self, model_type=model_type, syntax_json=syntax_json
+                    )
+
+                release_changes.update(release=self)
+
+    def _get_release_syntax(self, model_type, release=None):
+        """
+        Return the syntax for the model model type and given release. There is only ever 1
+        model_type syntax for a given release.
+
+        The filter argument is for the filtering the json for a given key. This could be used to
+        return a single object or to only return an objects related keys.
+        """
+        if release is None:
+            release = self
+
+        syntax = release.syntax.filter(model_type=model_type).first()
+
+        if syntax:
+            return syntax.syntax_json
+        return []
+
+    def _merge_changes(self, syntax, changes):
         """
         For each ReleaseChange requiring to be merged, modify the parent Release's syntax.
         """
@@ -124,43 +164,46 @@ class Release(MPTTModel):
 
         return syntax
 
-    def get_all_syntax_definitions(
-        self, model_name: str, fields: Optional[List[str]] = None
-    ) -> list:
+    def _filter_syntax(self, syntax, filters):
+        def filter_syntax(obj):
+            for filter_dict in filters:
+                if obj[filter_dict['key']] != filter_dict['value']:
+                    return False
+            return True
+
+        return [obj for obj in syntax if filter_syntax(obj)]
+
+    def get_all_syntax_definitions(self, model_type: str, filters: List) -> list:
         """
         This method returns the all of the syntax definitions for a given model. However, a release
         only contains the current committed changes to an application. This means there may exist
         updated to one of the syntaxes within a ReleaseChange model.
         """
-        syntax = {model_name: getattr(self, self.field_mappings[model_name])}
-        changes = self.staged_changes.all()
+        current_syntax = self._get_release_syntax(model_type)
+        staged_changes = self.staged_changes.filter(model_type=model_type)
 
-        merged_syntax = self._apply_changes(syntax, changes)[model_name]
+        if staged_changes.exists():
+            merged_syntax = self._merge_changes({model_type: current_syntax}, staged_changes)
+            merged_syntax = merged_syntax[model_type]
+        else:
+            merged_syntax = current_syntax
 
-        if fields:
-            return [self._extract_fields(syntax_object, fields) for syntax_object in merged_syntax]
+        if filters:
+            return self._filter_syntax(merged_syntax, filters)
         return merged_syntax
 
-    def get_syntax_definition(
-        self, model_name: str, object_id: uuid.UUID, fields: Optional[List[str]] = None
-    ) -> dict:
+    def get_syntax_definition(self, model_name: str, object_id: uuid.UUID, filters: List) -> dict:
         found_syntaxes = [
-            x for x in self.get_all_syntax_definitions(model_name) if x['id'] == str(object_id)
+            x
+            for x in self.get_all_syntax_definitions(model_name, filters)
+            if x['id'] == str(object_id)
         ]
 
         if found_syntaxes:
             syntax = found_syntaxes[0]
 
-            return self._extract_fields(syntax, fields)
+            return syntax
         return {}
-
-    def _extract_fields(self, syntax: dict, fields: Optional[List[str]]):
-        if fields:
-            if 'id' not in fields:
-                fields.insert(0, 'id')
-
-            return {field: syntax[field] for field in fields}
-        return syntax
 
     @classmethod
     def get_current_release(cls):

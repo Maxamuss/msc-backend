@@ -141,18 +141,30 @@ class DeveloperAPIView(APIView):
         release_version = self.request.query_params.get('release_version')
 
         if release_version:
-            release = Release.objects.filter(current_release=True).first()
+            release = Release.objects.filter(release_version=release_version).first()
 
             if not release:
                 raise Exception('Release version not found.')
         else:
-            release = Release.objects.order_by('-released_at').first()
+            release = Release.get_current_release()
 
         return release
 
     @property
-    def fields(self):
-        return self.request.query_params.getlist('fields', [])
+    def filters(self):
+        return []
+        filter_names = [x for x in self.request.query_params if x.startswith('_f_')]
+        parsed_filters = []
+
+        for filter_name in filter_names:
+            filter_value = self.request.query_params.get(filter_name)
+
+            if filter_value:
+                parsed_filters.append(
+                    {'key': filter_name.replace('_f_', ''), 'value': filter_value}
+                )
+
+        return parsed_filters
 
     # ---------------------------------------------------------------------------------------------
     # HTTP methods
@@ -189,7 +201,7 @@ class DeveloperAPIView(APIView):
         """
         This method returns all of the syntax definitions for a model from the current release.
         """
-        data = self.release.get_all_syntax_definitions(self.model_name, fields=self.fields)
+        data = self.release.get_all_syntax_definitions(self.model_name, self.filters)
         return Response(data)
 
     def detail(self):
@@ -197,9 +209,7 @@ class DeveloperAPIView(APIView):
         This method returns the syntax for a model from the current release.
         """
         print('detail')
-        data = self.release.get_syntax_definition(
-            self.model_name, self.object_id, fields=self.fields
-        )
+        data = self.release.get_syntax_definition(self.model_name, self.object_id, self.filters)
         return Response(data)
 
     def create(self):
@@ -268,11 +278,6 @@ class DeveloperAPIView(APIView):
             object_id=self.object_id,
             syntax_json=self.request.data,
         )
-
-    # try:
-    # except Exception as e:
-    #     print(e)
-    #     return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ReleaseAPIView(ViewSet):

@@ -12,7 +12,6 @@ data = {
             'fields': [],
         },
     ],
-    # 'page': [{'page_name': 'list'}, {'page_name': 'create'}],
     'function': [
         {'function_name': 'Send Email'},
         {'function_name': 'Export as CSV'},
@@ -33,14 +32,19 @@ class Command(BaseCommand):
             release_notes='Application Initialisation Release',
         )
 
+        model_id = None
+
         for model_type, definitions in data.items():
             for definition in definitions:
-                ReleaseChange.objects.create(
+                release_change = ReleaseChange.objects.create(
                     parent_release=initial_release,
                     change_type=ReleaseChangeType.CREATE,
                     model_type=model_type,
                     syntax_json=definition,
                 )
+
+                if model_type == 'modelschema':
+                    model_id = release_change.object_id
 
         second_release = Release.objects.create(
             parent=initial_release,
@@ -48,6 +52,12 @@ class Command(BaseCommand):
             release_notes='Initial release',
         )
 
+        ReleaseChange.objects.create(
+            parent_release=second_release,
+            change_type=ReleaseChangeType.CREATE,
+            model_type='page',
+            syntax_json={'page_name': 'list', 'model_id': str(model_id)},
+        )
         # ReleaseChange.objects.create(
         #     parent_release=second_release,
         #     change_type=ReleaseChangeType.DELETE,
@@ -56,13 +66,13 @@ class Command(BaseCommand):
         #     syntax_json={},
         # )
         # print(second_release.modelschemas)
-        ReleaseChange.objects.create(
-            parent_release=second_release,
-            change_type=ReleaseChangeType.UPDATE,
-            object_id=UUID(second_release.modelschemas[0]['id'], version=4),
-            model_type='modelschema',
-            syntax_json={'model_name': 'Horror Book', 'fields': []},
-        )
+        # ReleaseChange.objects.create(
+        #     parent_release=second_release,
+        #     change_type=ReleaseChangeType.UPDATE,
+        #     object_id=UUID(second_release.modelschemas[0]['id'], version=4),
+        #     model_type='modelschema',
+        #     syntax_json={'model_name': 'Horror Book', 'fields': []},
+        # )
         # ReleaseChange.objects.create(
         #     parent_release=second_release,
         #     change_type=ReleaseChangeType.CREATE,

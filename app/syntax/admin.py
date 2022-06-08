@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from .models import Release, ReleaseChange
+from .models import Release, ReleaseChange, ReleaseSyntax
+
+
+class ReleaseSyntaxInline(admin.TabularInline):
+    model = ReleaseSyntax
+    extra = 0
 
 
 class ReleaseChangeInline(admin.TabularInline):
@@ -17,5 +22,5 @@ class ReleaseChangeAdmin(admin.ModelAdmin):
 
 @admin.register(Release)
 class ReleaseAdmin(admin.ModelAdmin):
-    inlines = [ReleaseChangeInline]
+    inlines = [ReleaseSyntaxInline, ReleaseChangeInline]
     list_display = ['release_version', 'current_release']
