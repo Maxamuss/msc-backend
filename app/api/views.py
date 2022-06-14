@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from uuid import UUID
 
 from django.db.models import Model as DjangoModel
@@ -124,8 +124,20 @@ class DeveloperAPIView(APIView):
         return self.kwargs.get('model')
 
     @property
-    def object_id(self) -> Optional[UUID]:
-        return self.kwargs.get('object_id')
+    def object_id(self) -> Union[Optional[UUID], str]:
+        obj_id = self.kwargs.get('object_id')
+
+        if obj_id == 'null':
+            return
+
+        return obj_id
+
+    @property
+    def parent_id(self) -> Optional[UUID]:
+        """
+        Parent id is the uuid primary key of the modelschema that this model is related to.
+        """
+        return self.kwargs.get('parent_id')
 
     @property
     def model(self) -> DjangoModel:
@@ -201,7 +213,7 @@ class DeveloperAPIView(APIView):
         """
         This method returns all of the syntax definitions for a model from the current release.
         """
-        data = self.release.get_all_syntax_definitions(self.model_name, self.filters)
+        data = self.release.get_all_syntax_definitions(self.model_name, parent_id=self.parent_id)
         return Response(data)
 
     def detail(self):
@@ -306,6 +318,7 @@ class ReleaseAPIView(ViewSet):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
             release = serializer.save()
-            return Response(release.data)
+            data = self.serializer_class(data=release).data
+            return Response(data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

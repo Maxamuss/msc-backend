@@ -18,4 +18,12 @@ urlpatterns = router.urls + [
         'developer/<str:model>/<uuid:object_id>/',
         views.DeveloperAPIView.as_view(),
     ),
+    path(
+        'developer/<str:model>/<uuid:object_id>/<uuid:parent_id>/',
+        views.DeveloperAPIView.as_view(),
+    ),
+    path(
+        'developer/<str:model>/null/<uuid:parent_id>/',
+        views.DeveloperAPIView.as_view(),
+    ),
 ]

@@ -14,6 +14,13 @@ data = {
                 {'field_name': 'author', 'field_type': 'text', 'required': True},
             ],
         },
+        {
+            'model_name': 'Rental',
+            'fields': [
+                {'field_name': 'book_name', 'field_type': 'text', 'required': True},
+                {'field_name': 'loaned_at', 'field_type': 'datetime', 'required': True},
+            ],
+        },
     ],
     'function': [
         {'function_name': 'Send Email'},
@@ -35,7 +42,7 @@ class Command(BaseCommand):
             release_notes='Application Initialisation Release',
         )
 
-        model_id = None
+        model_ids = {}
 
         for model_type, definitions in data.items():
             for definition in definitions:
@@ -47,7 +54,7 @@ class Command(BaseCommand):
                 )
 
                 if model_type == 'modelschema':
-                    model_id = release_change.object_id
+                    model_ids[definition['model_name']] = release_change.object_id
 
         second_release = Release.objects.create(
             parent=initial_release,
@@ -59,7 +66,13 @@ class Command(BaseCommand):
             parent_release=second_release,
             change_type=ReleaseChangeType.CREATE,
             model_type='page',
-            syntax_json={'page_name': 'list', 'model_id': str(model_id)},
+            syntax_json={'page_name': 'list', 'model_id': str(model_ids['Book'])},
+        )
+        ReleaseChange.objects.create(
+            parent_release=second_release,
+            change_type=ReleaseChangeType.CREATE,
+            model_type='page',
+            syntax_json={'page_name': 'list', 'model_id': str(model_ids['Rental'])},
         )
         # ReleaseChange.objects.create(
         #     parent_release=second_release,

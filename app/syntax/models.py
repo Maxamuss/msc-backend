@@ -147,6 +147,8 @@ class Release(MPTTModel):
             if change.model_type in syntax.keys():
                 object_id = str(change.object_id)
 
+                print(object_id)
+
                 if change.change_type == ReleaseChangeType.CREATE:
                     # Add resource to syntax.
                     syntax[change.model_type].append(change.syntax_json)
@@ -173,7 +175,9 @@ class Release(MPTTModel):
 
         return [obj for obj in syntax if filter_syntax(obj)]
 
-    def get_all_syntax_definitions(self, model_type: str, filters: List) -> list:
+    def get_all_syntax_definitions(
+        self, model_type: str, parent_id: Optional[uuid.UUID] = None
+    ) -> list:
         """
         This method returns the all of the syntax definitions for a given model. However, a release
         only contains the current committed changes to an application. This means there may exist
@@ -188,8 +192,9 @@ class Release(MPTTModel):
         else:
             merged_syntax = current_syntax
 
-        if filters:
-            return self._filter_syntax(merged_syntax, filters)
+        if parent_id:
+            return [x for x in merged_syntax if x['model_id'] == str(parent_id)]
+
         return merged_syntax
 
     def get_syntax_definition(self, model_name: str, object_id: uuid.UUID, filters: List) -> dict:
