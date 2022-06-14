@@ -25,7 +25,7 @@ class ReleaseSerializer(serializers.ModelSerializer):
         }
 
     def get_unapplied_changes(self, obj):
-        return obj.staged_changes.filter(release__isnull=True).count()
+        return obj.release_changes.count()
 
     def validate(self, data):
         """

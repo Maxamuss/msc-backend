@@ -98,30 +98,6 @@ class Release(MPTTModel):
         parent Releases' syntax and add it to the model.
 
         Then, the changes are applied to the models.
-         # syntax = {
-            #     model_type: self._get_release_syntax(model_type, release=self.parent)
-            #     for model_type in self.field_mappings.keys()
-            # }
-
-            # # Merge the parent Release syntax with the current changes.
-            # merged_syntax = self._merge_changes(syntax, release_changes)
-
-            # # Set this release as current all other releases as no current. Use update to not call
-            # # the model save method on the other Releases. Ensures there is always only 1 current
-            # # release at a time.
-            # Release.objects.all().update(current_release=False)
-            # Release.objects.filter(id=self.id).update(current_release=True)
-
-            # # For the ReleaseChanges that have been merged into this Release, set their release FK
-            # # to this Release so that they are marked are merged. Also create a ReleaseSyntax for
-            # # the merged syntax.
-            # if release_changes:
-            #     for model_type, syntax_json in merged_syntax.items():
-            #         ReleaseSyntax.objects.create(
-            #             release=self, model_type=model_type, syntax_json=syntax_json
-            #         )
-
-            #     release_changes.update(release=self)
         """
         is_new = self.pk is None
 
@@ -148,6 +124,8 @@ class Release(MPTTModel):
                             )
 
                 ReleaseSyntax.objects.bulk_create(release_syntax_models)
+
+            ReleaseChange.objects.filter(parent_release=self.parent).delete()
 
     def _get_release_syntax(self, model_type, object_id=None, modelschema_id=None, release=None):
         if release is None:
