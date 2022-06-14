@@ -33,7 +33,7 @@ class ReleaseSerializer(serializers.ModelSerializer):
         """
         current_release = Release.get_current_release()
 
-        if not current_release.staged_changes.all().exists():
+        if not current_release.release_changes.all().exists():
             raise serializers.ValidationError(
                 'There have been no changes made to the current release.'
             )

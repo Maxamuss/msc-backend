@@ -217,7 +217,11 @@ class DeveloperAPIView(APIView):
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
         object_id = self.create_release(ReleaseChangeType.CREATE)
-        schema = self.release.get_syntax_definition(self.model_name, object_id, self.filters)
+        schema = self.release.get_syntax_definitions(
+            self.model_name,
+            object_id=object_id,
+            release=self.release,
+        )
         return Response(schema, status=status.HTTP_200_OK)
 
     def update(self):
@@ -225,7 +229,11 @@ class DeveloperAPIView(APIView):
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
         self.create_release(ReleaseChangeType.UPDATE)
-        schema = self.release.get_syntax_definition(self.model_name, self.object_id, self.filters)
+        schema = self.release.get_syntax_definitions(
+            self.model_name,
+            object_id=self.object_id,
+            release=self.release,
+        )
         return Response(schema, status=status.HTTP_200_OK)
 
     def destroy(self):
@@ -240,30 +248,15 @@ class DeveloperAPIView(APIView):
     # ---------------------------------------------------------------------------------------------
 
     def create_release(self, change_type):
-        # Check if there is already a ReleaseChange.
-        release_change = ReleaseChange.objects.filter(
+        release_change = ReleaseChange(
             parent_release=self.release,
+            change_type=change_type,
             model_type=self.model_name,
-            object_id=self.object_id,
-        ).first()
+            syntax_json=self.request.data,
+        )
+        release_change.save(object_id=self.object_id)
 
-        if release_change:
-            if release_change.change_type != ReleaseChangeType.DELETE:
-                for key, value in self.request.data.items():
-                    if key.lower() != 'id':
-                        release_change.syntax_json[key] = value
-
-                release_change.save()
-        else:
-            release_change = ReleaseChange.objects.create(
-                parent_release=self.release,
-                change_type=change_type,
-                model_type=self.model_name,
-                object_id=self.object_id,
-                syntax_json=self.request.data,
-            )
-
-        return release_change.object_id
+        return release_change.syntax_json['id']
 
 
 class ReleaseAPIView(ViewSet):
@@ -307,7 +300,7 @@ class ReleaseAPIView(ViewSet):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
             release = serializer.save()
-            data = self.serializer_class(data=release).data
+            data = self.serializer_class(data=release).initial_data
             return Response(data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

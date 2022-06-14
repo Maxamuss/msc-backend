@@ -1,8 +1,7 @@
 import uuid
-from typing import List, Optional, Union
 
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Value
 
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -127,6 +126,38 @@ class Release(MPTTModel):
 
             ReleaseChange.objects.filter(parent_release=self.parent).delete()
 
+    def get_syntax_definitions(
+        self,
+        model_type,
+        object_id=None,
+        modelschema_id=None,
+        release=None,
+    ):
+        """
+        This method returns the all of the syntax definitions for a given model. However, a release
+        only contains the current committed changes to an application. This means there may exist
+        updated to one of the syntaxes within a ReleaseChange model.
+        """
+        release_syntaxes = list(
+            self._get_release_syntax(
+                model_type, object_id=object_id, modelschema_id=modelschema_id, release=release
+            ).values_list('syntax_json', flat=True)
+        )
+        release_changes = self._get_release_changes(
+            model_type, object_id=object_id, modelschema_id=modelschema_id, release=release
+        )
+
+        if release_changes.exists():
+            syntax = self._merge_changes(release_syntaxes, release_changes)
+        else:
+            syntax = release_syntaxes
+
+        if object_id:
+            if len(syntax) == 1:
+                return syntax[0]
+            return {}
+        return syntax
+
     def _get_release_syntax(self, model_type, object_id=None, modelschema_id=None, release=None):
         if release is None:
             release = self
@@ -175,38 +206,6 @@ class Release(MPTTModel):
 
         return current_syntax
 
-    def get_syntax_definitions(
-        self,
-        model_type,
-        object_id=None,
-        modelschema_id=None,
-        release=None,
-    ):
-        """
-        This method returns the all of the syntax definitions for a given model. However, a release
-        only contains the current committed changes to an application. This means there may exist
-        updated to one of the syntaxes within a ReleaseChange model.
-        """
-        release_syntaxes = list(
-            self._get_release_syntax(
-                model_type, object_id=object_id, modelschema_id=modelschema_id, release=release
-            ).values_list('syntax_json', flat=True)
-        )
-        release_changes = self._get_release_changes(
-            model_type, object_id=object_id, modelschema_id=modelschema_id, release=release
-        )
-
-        if release_changes.exists():
-            syntax = self._merge_changes(release_syntaxes, release_changes)
-
-            if object_id:
-                if len(syntax) > 0:
-                    return syntax[0]
-                return {}
-            return syntax
-
-        return release_syntaxes
-
 
 class ReleaseChange(BaseModel):
     """
@@ -238,10 +237,10 @@ class ReleaseChange(BaseModel):
     def save(self, *args, object_id=None, **kwargs):
         # self.full_clean()
         if change := self.get_existing_release_change(object_id):
-            existing_syntax = change.sytnax_json
+            existing_syntax = change.syntax_json
             change.delete()
         elif change := self._get_existing_release_syntax(object_id):
-            existing_syntax = change.sytnax_json
+            existing_syntax = change.syntax_json
         else:
             existing_syntax = None
 
@@ -269,7 +268,10 @@ class ReleaseChange(BaseModel):
                 release=self.parent_release,
                 model_type=self.model_type,
             )
-            .annotate(object_id=F('syntax_json__id'), change_type=None)
+            .annotate(
+                object_id=F('syntax_json__id'),
+                change_type=Value(None, output_field=models.CharField()),
+            )
             .filter(object_id=object_id)
             .first()
         )
@@ -283,7 +285,7 @@ class ReleaseChange(BaseModel):
                 parent_release=self.parent_release,
                 model_type=self.model_type,
             )
-            .annotate(object_id=F('syntax_json__id'), change_type=None)
+            .annotate(object_id=F('syntax_json__id'))
             .filter(object_id=object_id)
             .first()
         )
