@@ -13,6 +13,14 @@ from layout.models import Page
 from packages.models import Package
 from workflows.models import Function, Workflow
 
+MODEL_TYPES = [
+    ModelSchema._meta.model_name,
+    Page._meta.model_name,
+    Package._meta.model_name,
+    Workflow._meta.model_name,
+    Function._meta.model_name,
+]
+
 
 class ReleaseChangeType(models.TextChoices):
     CREATE = 'create'
@@ -52,7 +60,7 @@ class ReleaseSyntax(BaseModel):
     )
 
     model_type = models.CharField(max_length=30)
-    syntax_json = models.JSONField(default=list, blank=True)
+    syntax_json = models.JSONField()
 
 
 class Release(MPTTModel):
@@ -76,21 +84,6 @@ class Release(MPTTModel):
     parent = TreeForeignKey(
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='children'
     )
-
-    # Stores the syntax for all models for this release.
-    # modelschemas = models.JSONField(default=list, blank=True)
-    # pages = models.JSONField(default=list, blank=True)
-    # packages = models.JSONField(default=list, blank=True)
-    # workflows = models.JSONField(default=list, blank=True)
-    # functions = models.JSONField(default=list, blank=True)
-
-    field_mappings = {
-        ModelSchema._meta.model_name: 'modelschemas',
-        Page._meta.model_name: 'pages',
-        Package._meta.model_name: 'packages',
-        Workflow._meta.model_name: 'workflows',
-        Function._meta.model_name: 'functions',
-    }
 
     def __str__(self):
         return self.release_version
@@ -134,9 +127,27 @@ class Release(MPTTModel):
 
         super().save(*args, **kwargs)
 
-        # if self.parent and is_new:
-        Release.objects.all().update(current_release=False)
-        Release.objects.filter(id=self.id).update(current_release=True)
+        if is_new:
+            Release.objects.all().update(current_release=False)
+            Release.objects.filter(id=self.id).update(current_release=True)
+
+            if self.parent:
+                release_syntax_models = []
+
+                for model_type in MODEL_TYPES:
+                    syntaxes = self.get_syntax_definitions(model_type, release=self.parent)
+
+                    for syntax_json in syntaxes:
+                        if syntax_json:
+                            release_syntax_models.append(
+                                ReleaseSyntax(
+                                    release=self,
+                                    model_type=model_type,
+                                    syntax_json=syntax_json,
+                                )
+                            )
+
+                ReleaseSyntax.objects.bulk_create(release_syntax_models)
 
     def _get_release_syntax(self, model_type, object_id=None, modelschema_id=None, release=None):
         if release is None:
@@ -188,10 +199,11 @@ class Release(MPTTModel):
 
     def get_syntax_definitions(
         self,
-        model_type: str,
-        object_id: Optional[str] = None,
-        modelschema_id: Optional[str] = None,
-    ) -> Union[list, dict]:
+        model_type,
+        object_id=None,
+        modelschema_id=None,
+        release=None,
+    ):
         """
         This method returns the all of the syntax definitions for a given model. However, a release
         only contains the current committed changes to an application. This means there may exist
@@ -199,12 +211,11 @@ class Release(MPTTModel):
         """
         release_syntaxes = list(
             self._get_release_syntax(
-                model_type, object_id=object_id, modelschema_id=modelschema_id
+                model_type, object_id=object_id, modelschema_id=modelschema_id, release=release
             ).values_list('syntax_json', flat=True)
         )
-
         release_changes = self._get_release_changes(
-            model_type, object_id=object_id, modelschema_id=modelschema_id
+            model_type, object_id=object_id, modelschema_id=modelschema_id, release=release
         )
 
         if release_changes.exists():
@@ -262,7 +273,7 @@ class ReleaseChange(BaseModel):
         else:
             self._generate_id()
 
-            if 'model_id' not in self.syntax_json:
+            if 'modelschema_id' not in self.syntax_json:
                 self.syntax_json['modelschema_id'] = None
 
         super().save(*args, **kwargs)

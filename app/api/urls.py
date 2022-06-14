@@ -23,7 +23,7 @@ urlpatterns = router.urls + [
         views.DeveloperAPIView.as_view(),
     ),
     path(
-        'developer/<str:model>/<uuid:modelschema_id>/',
+        'developer/<str:model>/>/<uuid:modelschema_id>/',
         views.DeveloperAPIView.as_view(),
     ),
 ]

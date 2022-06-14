@@ -127,7 +127,7 @@ class DeveloperAPIView(APIView):
     def object_id(self) -> Optional[str]:
         obj_id = self.kwargs.get('object_id')
 
-        if obj_id == 'null':
+        if not obj_id or obj_id == 'null':
             return
 
         return str(obj_id)
@@ -145,15 +145,6 @@ class DeveloperAPIView(APIView):
         return str(ms_id)
 
     @property
-    def model(self) -> DjangoModel:
-        model = self.model_name_mapping.get(self.model_name)
-
-        if not model:
-            raise Exception('Incorrect model passed.')
-
-        return model
-
-    @property
     def release(self) -> Release:
         release_version = self.request.query_params.get('release_version')
 
@@ -166,22 +157,6 @@ class DeveloperAPIView(APIView):
             release = Release.get_current_release()
 
         return release
-
-    @property
-    def filters(self):
-        return []
-        filter_names = [x for x in self.request.query_params if x.startswith('_f_')]
-        parsed_filters = []
-
-        for filter_name in filter_names:
-            filter_value = self.request.query_params.get(filter_name)
-
-            if filter_value:
-                parsed_filters.append(
-                    {'key': filter_name.replace('_f_', ''), 'value': filter_value}
-                )
-
-        return parsed_filters
 
     # ---------------------------------------------------------------------------------------------
     # HTTP methods
@@ -219,7 +194,9 @@ class DeveloperAPIView(APIView):
         This method returns all of the syntax definitions for a model from the current release.
         """
         data = self.release.get_syntax_definitions(
-            self.model_name, modelschema_id=self.modelschema_id
+            self.model_name,
+            modelschema_id=self.modelschema_id,
+            release=self.release,
         )
         return Response(data)
 
@@ -228,7 +205,10 @@ class DeveloperAPIView(APIView):
         This method returns the syntax for a model from the current release.
         """
         data = self.release.get_syntax_definitions(
-            self.model_name, object_id=self.object_id, modelschema_id=self.modelschema_id
+            self.model_name,
+            object_id=self.object_id,
+            modelschema_id=self.modelschema_id,
+            release=self.release,
         )
         return Response(data)
 
