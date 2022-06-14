@@ -124,20 +124,25 @@ class DeveloperAPIView(APIView):
         return self.kwargs.get('model')
 
     @property
-    def object_id(self) -> Union[Optional[UUID], str]:
+    def object_id(self) -> Optional[str]:
         obj_id = self.kwargs.get('object_id')
 
         if obj_id == 'null':
             return
 
-        return obj_id
+        return str(obj_id)
 
     @property
-    def parent_id(self) -> Optional[UUID]:
+    def modelschema_id(self) -> Optional[str]:
         """
         Parent id is the uuid primary key of the modelschema that this model is related to.
         """
-        return self.kwargs.get('parent_id')
+        ms_id = self.kwargs.get('modelschema_id')
+
+        if not ms_id:
+            return
+
+        return str(ms_id)
 
     @property
     def model(self) -> DjangoModel:
@@ -213,14 +218,18 @@ class DeveloperAPIView(APIView):
         """
         This method returns all of the syntax definitions for a model from the current release.
         """
-        data = self.release.get_all_syntax_definitions(self.model_name, parent_id=self.parent_id)
+        data = self.release.get_syntax_definitions(
+            self.model_name, modelschema_id=self.modelschema_id
+        )
         return Response(data)
 
     def detail(self):
         """
         This method returns the syntax for a model from the current release.
         """
-        data = self.release.get_syntax_definition(self.model_name, self.object_id, self.filters)
+        data = self.release.get_syntax_definitions(
+            self.model_name, object_id=self.object_id, modelschema_id=self.modelschema_id
+        )
         return Response(data)
 
     def create(self):

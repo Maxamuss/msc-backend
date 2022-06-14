@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from layout.models import Page
-from syntax.utils import replace_syntax
+from syntax._old.utils import replace_syntax
 from .constants import MODEL_DEFAULT_PAGES
 from .models import FieldSchema, ModelSchema
 

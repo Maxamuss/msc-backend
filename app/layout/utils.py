@@ -5,7 +5,7 @@ from rest_framework.exceptions import ParseError
 
 from db.models import ModelSchema
 from layout.models import Page
-from syntax.utils import replace_syntax
+from syntax._old.utils import replace_syntax
 
 
 def populate_all_fields(model_schema, layout):

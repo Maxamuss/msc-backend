@@ -19,11 +19,11 @@ urlpatterns = router.urls + [
         views.DeveloperAPIView.as_view(),
     ),
     path(
-        'developer/<str:model>/<uuid:object_id>/<uuid:parent_id>/',
+        'developer/<str:model>/<uuid:object_id>/<uuid:modelschema_id>/',
         views.DeveloperAPIView.as_view(),
     ),
     path(
-        'developer/<str:model>/null/<uuid:parent_id>/',
+        'developer/<str:model>/<uuid:modelschema_id>/',
         views.DeveloperAPIView.as_view(),
     ),
 ]

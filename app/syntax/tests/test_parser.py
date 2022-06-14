@@ -2,7 +2,7 @@ import json
 
 from django.test import TestCase
 
-from ..parser import SyntaxParser
+from .._old.parser import SyntaxParser
 
 
 class SyntaxParserTest(TestCase):
