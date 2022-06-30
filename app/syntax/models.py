@@ -45,13 +45,6 @@ class ReleaseSyntax(BaseModel):
     Indexes are made on the id and model_id keys for faster lookups.
     """
 
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(
-    #             fields=['release', 'model_type', 'object_id'], name='unique_release_syntax_type'
-    #         )
-    #     ]
-
     release = models.ForeignKey(
         'syntax.Release',
         on_delete=models.CASCADE,
@@ -60,6 +53,33 @@ class ReleaseSyntax(BaseModel):
 
     model_type = models.CharField(max_length=30)
     syntax_json = models.JSONField()
+
+    @classmethod
+    def get_modelschema_id_from_name(cls, release, model_name):
+        """
+        Return the id of a modelschema by its model_name field.
+        """
+        print(
+            cls.objects.filter(
+                release=release, model_type='modelschema', syntax_json__model_name=model_name
+            )
+        )
+        release_syntax = cls.objects.filter(
+            release=release, model_type='modelschema', syntax_json__model_name=model_name
+        ).first()
+
+        if release_syntax:
+            return release_syntax.syntax_json['id']
+        return
+
+    @classmethod
+    def get_page(cls, release, modelschema_id, page_name):
+        return cls.objects.filter(
+            release=release,
+            model_type='page',
+            syntax_json__modelschema_id=modelschema_id,
+            syntax_json__page_name=page_name,
+        ).first()
 
 
 class Release(MPTTModel):

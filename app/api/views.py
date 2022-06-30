@@ -1,105 +1,58 @@
-import json
-from typing import Optional, Tuple, Union
-from uuid import UUID
+from typing import Optional
 
-from django.db.models import Model as DjangoModel
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
-from db.models import FieldSchema, ModelSchema
-from layout.constants import Environment
-from layout.models import Page
-from layout.utils import get_page_layout
-from packages.models import Package
-from syntax.models import Release, ReleaseChange, ReleaseChangeType
+from syntax.models import Release, ReleaseChange, ReleaseChangeType, ReleaseSyntax
 from syntax.serializers import ReleaseSerializer
-from workflows.models import Function, Workflow
 
 
 class LayoutAPIView(APIView):
     """
-    API responsible for returning a page layout.
-
-    /layout/?environment=${environment}&model=${model}&page=${page}
-        - environment the user is in (developer or user).
-
-    Developer layouts are defined in files. These are cached in Redis with a 15 minute timeout.
-
-    User layouts are defined for a Model and stored in a corresponding Page table.
+    API responsible for returning a page layout. All layouts are defined within a ReleaseSyntax
+    model.
     """
 
+    @property
+    def model_name(self) -> str:
+        return self.kwargs.get('model')
+
+    @property
+    def page_name(self) -> Optional[str]:
+        return self.kwargs.get('page')
+
     def get(self, *args, **kwargs):
-        environment, resource, resource_type = self.parse_args()
-
-        if resource == 'skeleton':
-            return self.get_skeleton_layout(environment, resource, resource_type)
-
-        return self.get_page_layout(environment, resource, resource_type)
-
-    def get_skeleton_layout(self, environment, resource, resource_type):
-        if environment == 'developer':
-            try:
-                with open(f'layout/layouts/skeleton.json') as f:
-                    layout = json.loads(f.read())
-            except FileNotFoundError:
-                return Response({'detail': 'File not found.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            if resource_type != 'all':
-                layout = layout.get(resource_type)
-
-                if layout is None:
-                    return Response(
-                        {'detail': 'Incorrect layout value'},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-            return Response(layout, status=status.HTTP_200_OK)
+        if self.model_name == '__application__':
+            layout_data = self._get_application_config()
         else:
-            layout = {
-                'colors': {
-                    'primary': '#7e22ce',
-                    'secondary': '#7e22ce',
-                },
-                'sidebar': [
-                    {
-                        "section_name": "",
-                        "links": [
-                            {"name": "Books", "icon": "CollectionIcon", "uri": "book:list"},
-                        ],
-                    },
-                ],
-            }
-            return Response(layout)
+            layout_data = self._get_page_layout()
 
-    def get_page_layout(self, environment, resource, resource_type):
-        layout = get_page_layout(environment, resource, resource_type, populate_all=True)
-        return Response(layout, status=status.HTTP_200_OK)
+        return Response(layout_data)
 
-    def parse_args(self) -> Tuple[str, str, str]:
-        environment = self.request.GET.get('environment')
-        resource = self.request.GET.get('resource')
-        resource_type = self.request.GET.get('resource_type')
+    def _get_application_config(self):
+        return {'models': []}
 
-        # Validate path has correct number of arguments.
-        if not environment:
-            raise ParseError('environment parameter not supplied')
+    def _get_page_layout(self):
+        """
+        For the given model_name and page_name, return the layout syntax json.
+        """
+        release = Release.get_current_release()
 
-        if environment not in Environment._member_names_:
-            raise ParseError('Incorrect environment parameter supplied')
+        modelschema_id = ReleaseSyntax.get_modelschema_id_from_name(release, self.model_name)
+        print(modelschema_id)
 
-        if not resource:
-            raise ParseError('resource parameter not supplied')
+        if modelschema_id:
+            page = ReleaseSyntax.get_page(release, modelschema_id, self.page_name)
 
-        if not resource_type:
-            raise ParseError('resource_type parameter not supplied')
+            if page:
+                return page.syntax_json['layout']
 
-        return environment, resource, resource_type
+        return {}
 
 
 class DeveloperAPIView(APIView):
@@ -109,15 +62,6 @@ class DeveloperAPIView(APIView):
     This API view always takes in syntax created on the frontend and manages the version control as
     well as the validation.
     """
-
-    model_name_mapping = {
-        ModelSchema._meta.model_name: ModelSchema,
-        FieldSchema._meta.model_name: FieldSchema,
-        Page._meta.model_name: Page,
-        Package._meta.model_name: Package,
-        Workflow._meta.model_name: Workflow,
-        Function._meta.model_name: Function,
-    }
 
     @property
     def model_name(self) -> str:

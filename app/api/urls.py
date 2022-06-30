@@ -9,7 +9,15 @@ router.register(r'developer/releases', views.ReleaseAPIView, basename='releases'
 
 
 urlpatterns = router.urls + [
-    path('layout/', views.LayoutAPIView.as_view()),
+    path(
+        'application/layout/<str:model>/',
+        views.LayoutAPIView.as_view(),
+    ),
+    path(
+        'application/layout/<str:model>/<str:page>/',
+        views.LayoutAPIView.as_view(),
+    ),
+    # Developer Views
     path(
         'developer/<str:model>/',
         views.DeveloperAPIView.as_view(),
