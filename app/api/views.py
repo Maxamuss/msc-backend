@@ -6,8 +6,10 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ViewSet
+from rest_framework.viewsets import ModelViewSet, ViewSet
 
+from accounts.models import User
+from accounts.serializers import UserSerializer
 from syntax.models import Release, ReleaseChange, ReleaseChangeType, ReleaseSyntax
 from syntax.serializers import ReleaseSerializer
 
@@ -203,7 +205,17 @@ class DeveloperAPIView(APIView):
         return release_change.syntax_json['id']
 
 
-class ReleaseAPIView(ViewSet):
+class UserViewSet(ModelViewSet):
+    """
+    API viewset to manage user accounts.
+    """
+
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    # permission_classes = [IsAccountAdminOrReadOnly]
+
+
+class ReleaseViewSet(ViewSet):
     """
     API view to manage the releases for the application.
 
