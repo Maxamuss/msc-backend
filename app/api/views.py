@@ -1,7 +1,9 @@
 from typing import Optional
 
 from django.shortcuts import get_object_or_404
+from django.utils.functional import cached_property
 
+from api.pagination import DataPagination
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -65,6 +67,178 @@ class LayoutAPIView(ReleaseMixin, APIView):
                 return page.syntax_json['layout']
 
         return {}
+
+
+class DataAPIView(ReleaseMixin, APIView):
+    """
+    API responsible for returning data for a specified model.
+    """
+
+    @cached_property
+    def model_name(self) -> str:
+        return self.kwargs.get('model')
+
+    @cached_property
+    def model(self) -> str:
+        models = self.release.get_syntax_definitions(
+            'modelschema',
+            release=self.release,
+        )
+
+        return self.kwargs.get('model')
+
+    @cached_property
+    def object_id(self) -> Optional[str]:
+        obj_id = self.kwargs.get('object_id')
+
+        if not obj_id or obj_id == 'null':
+            return
+
+        return str(obj_id)
+
+    # ---------------------------------------------------------------------------------------------
+    # HTTP methods
+    # ---------------------------------------------------------------------------------------------
+
+    def dispatch(self, request, *args, **kwargs):
+        super().dispatch(request, *args, **kwargs)
+
+        self.model
+
+    def get(self, request, *args, **kwargs):
+        if self.object_id:
+            return self.detail()
+        return self.list()
+
+    def post(self, request, *args, **kwargs):
+        self.method_setup()
+
+        if not self.object_id:
+            return self.create()
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, *args, **kwargs):
+        self.method_setup()
+
+        if self.object_id:
+            return self.update()
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, *args, **kwargs):
+        return self.put(request, *args, **kwargs)
+
+    # ---------------------------------------------------------------------------------------------
+    # Views
+    # ---------------------------------------------------------------------------------------------
+
+    def list(self):
+        queryset = self.get_queryset()
+        paginator = DataPagination()
+        page = paginator.paginate_queryset(queryset, self.request, view=self)
+        serializer = self.get_serializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def detail(self):
+        resource = get_object_or_404(self.get_queryset(), id=self.model_id)
+        serializer = self.get_serializer(resource)
+        return Response(serializer.data)
+
+    def create(self):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self):
+        partial = self.request.method.lower() == 'patch'
+        resource = get_object_or_404(self.get_queryset(), id=self.model_id)
+        serializer = self.get_serializer(resource, data=self.request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        if getattr(resource, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            resource._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
+    # ---------------------------------------------------------------------------------------------
+    # Util methods
+    # ---------------------------------------------------------------------------------------------
+
+    def get_queryset(self):
+        """
+        Options:
+            - Search on each column
+            - Sorting
+            - Filters
+        """
+        queryset = self.model.objects.all()
+        return queryset
+        queryset = self.set_queryset_fields(queryset)
+        queryset = self.order_queryset(queryset)
+
+        # Filter the queryset.
+        query = {}
+
+        if self.filter_model_name:
+            if self.filter_model_name in [field.name for field in self.model._meta.get_fields()]:
+                query[self.filter_model_name] = self.model_id
+
+        return queryset.filter(**query)
+
+    def set_queryset_fields(self, queryset):
+        only_fields = self.get_fields
+
+        if isinstance(only_fields, list):
+            queryset = queryset.only(*only_fields)
+
+        return queryset
+
+    def order_queryset(self, queryset):
+        return queryset.order_by('-created_at')
+
+    # @cached_property
+    # def get_fields(self) -> Union[str, List]:
+    #     """
+    #     If the component query parameter is passed, get the component and its defined fields.
+    #     """
+    #     if self.page and self.component_id:
+    #         layout = get_page_layout(self.environment, self.model_name, self.page)
+
+    #         if layout:
+    #             component = find_component(layout.get('layout', []), self.component_id)
+
+    #             if component:
+    #                 fields = [
+    #                     x.get('field_name') for x in component.get('config', {}).get('fields', [])
+    #                 ]
+
+    #                 if 'id' not in fields:
+    #                     fields.append('id')
+
+    #                 return fields
+
+    #     return '__all__'
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.generic_serializer(self.model)
+        kwargs.setdefault(
+            'context',
+            {'request': self.request, 'format': self.format_kwarg, 'view': self},
+        )
+        return serializer_class(*args, **kwargs)
+
+    def generic_serializer(self, serializer_model):
+        class GenericSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = serializer_model
+                fields = '__all__'
+
+        return GenericSerializer
 
 
 class DeveloperAPIView(ReleaseMixin, APIView):
