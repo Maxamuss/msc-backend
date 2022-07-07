@@ -12,9 +12,10 @@ from accounts.models import User
 from accounts.serializers import UserSerializer
 from syntax.models import Release, ReleaseChange, ReleaseChangeType, ReleaseSyntax
 from syntax.serializers import ReleaseSerializer
+from .mixins import ReleaseMixin
 
 
-class LayoutAPIView(APIView):
+class LayoutAPIView(ReleaseMixin, APIView):
     """
     API responsible for returning a page layout. All layouts are defined within a ReleaseSyntax
     model.
@@ -37,7 +38,16 @@ class LayoutAPIView(APIView):
         return Response(layout_data)
 
     def _get_application_config(self):
-        return {'models': []}
+        models = self.release.get_syntax_definitions(
+            'modelschema', release=self.release, ordering='model_name'
+        )
+
+        for model in models:
+            model['pages'] = self.release.get_syntax_definitions(
+                'page', modelschema_id=model['id'], release=self.release, ordering='page_name'
+            )
+
+        return {'models': models}
 
     def _get_page_layout(self):
         """
@@ -57,7 +67,7 @@ class LayoutAPIView(APIView):
         return {}
 
 
-class DeveloperAPIView(APIView):
+class DeveloperAPIView(ReleaseMixin, APIView):
     """
     API responsible for handling actions made in the developer site.
 
@@ -89,20 +99,6 @@ class DeveloperAPIView(APIView):
             return
 
         return str(ms_id)
-
-    @property
-    def release(self) -> Release:
-        release_version = self.request.query_params.get('release_version')
-
-        if release_version:
-            release = Release.objects.filter(release_version=release_version).first()
-
-            if not release:
-                raise Exception('Release version not found.')
-        else:
-            release = Release.get_current_release()
-
-        return release
 
     # ---------------------------------------------------------------------------------------------
     # HTTP methods
