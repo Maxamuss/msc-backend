@@ -263,16 +263,16 @@ class DeveloperAPIView(ReleaseMixin, APIView):
         return str(obj_id)
 
     @property
-    def modelschema_id(self) -> Optional[str]:
+    def query_params(self):
         """
-        Parent id is the uuid primary key of the modelschema that this model is related to.
+        Return a dict of query params passed.
         """
-        ms_id = self.kwargs.get('modelschema_id')
+        params = dict(self.request.query_params)
 
-        if not ms_id:
-            return
+        for key, param in params.items():
+            params[key] = list(param)[0]
 
-        return str(ms_id)
+        return params
 
     # ---------------------------------------------------------------------------------------------
     # HTTP methods
@@ -311,8 +311,8 @@ class DeveloperAPIView(ReleaseMixin, APIView):
         """
         data = self.release.get_syntax_definitions(
             self.model_name,
-            modelschema_id=self.modelschema_id,
             release=self.release,
+            **self.query_params,
         )
         return Response(data)
 
@@ -323,8 +323,8 @@ class DeveloperAPIView(ReleaseMixin, APIView):
         data = self.release.get_syntax_definitions(
             self.model_name,
             object_id=self.object_id,
-            modelschema_id=self.modelschema_id,
             release=self.release,
+            **self.query_params,
         )
         return Response(data)
 

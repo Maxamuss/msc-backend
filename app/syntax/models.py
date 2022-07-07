@@ -147,20 +147,25 @@ class Release(MPTTModel):
             ReleaseChange.objects.filter(parent_release=self.parent).delete()
 
     def get_syntax_definitions(
-        self, model_type, object_id=None, modelschema_id=None, release=None, ordering=None
+        self, model_type, object_id=None, release=None, ordering=None, **kwargs
     ):
         """
+        modelschema_id=None,
         This method returns the all of the syntax definitions for a given model. However, a release
         only contains the current committed changes to an application. This means there may exist
         updated to one of the syntaxes within a ReleaseChange model.
         """
+        if kwargs:
+            for key in list(kwargs):
+                kwargs[f'syntax_json__{key}'] = kwargs.pop(key)
+
         release_syntaxes = list(
             self._get_release_syntax(
-                model_type, object_id=object_id, modelschema_id=modelschema_id, release=release
+                model_type, object_id=object_id, release=release, **kwargs
             ).values_list('syntax_json', flat=True)
         )
         release_changes = self._get_release_changes(
-            model_type, object_id=object_id, modelschema_id=modelschema_id, release=release
+            model_type, object_id=object_id, release=release, **kwargs
         )
 
         if release_changes.exists():
@@ -177,7 +182,7 @@ class Release(MPTTModel):
             return {}
         return syntax
 
-    def _get_release_syntax(self, model_type, object_id=None, modelschema_id=None, release=None):
+    def _get_release_syntax(self, model_type, object_id=None, release=None, **kwargs):
         if release is None:
             release = self
 
@@ -186,12 +191,13 @@ class Release(MPTTModel):
         if object_id:
             syntax = syntax.filter(syntax_json__id=object_id)
 
-        if modelschema_id:
-            syntax = syntax.filter(syntax_json__modelschema_id=modelschema_id)
+        if kwargs:
+            print(kwargs)
+            syntax = syntax.filter(**kwargs)
 
         return syntax
 
-    def _get_release_changes(self, model_type, object_id=None, modelschema_id=None, release=None):
+    def _get_release_changes(self, model_type, object_id=None, release=None, **kwargs):
         if release is None:
             release = self
 
@@ -200,8 +206,8 @@ class Release(MPTTModel):
         if object_id:
             syntax = syntax.filter(syntax_json__id=object_id)
 
-        if modelschema_id:
-            syntax = syntax.filter(syntax_json__modelschema_id=modelschema_id)
+        if kwargs:
+            syntax = syntax.filter(**kwargs)
 
         return syntax
 

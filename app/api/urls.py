@@ -18,6 +18,14 @@ urlpatterns = router.urls + [
         'application/layout/<str:model>/<str:page>/',
         views.LayoutAPIView.as_view(),
     ),
+    path(
+        'application/data/<str:model>/',
+        views.DataAPIView.as_view(),
+    ),
+    path(
+        'application/data/<str:model>/<uuid:object_id>/',
+        views.DataAPIView.as_view(),
+    ),
     # Developer Views
     path(
         'developer/<str:model>/',
@@ -25,14 +33,6 @@ urlpatterns = router.urls + [
     ),
     path(
         'developer/<str:model>/<uuid:object_id>/',
-        views.DeveloperAPIView.as_view(),
-    ),
-    path(
-        'developer/<str:model>/<uuid:object_id>/<uuid:modelschema_id>/',
-        views.DeveloperAPIView.as_view(),
-    ),
-    path(
-        'developer/<str:model>/>/<uuid:modelschema_id>/',
         views.DeveloperAPIView.as_view(),
     ),
 ]
