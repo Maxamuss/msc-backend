@@ -37,14 +37,14 @@ class Command(BaseCommand):
     help = 'Setup testing environment'
 
     def handle(self, *args, **options):
-        # user = User.objects.create_superuser(email='admin@email.com', password=None)  # type: ignore
-        # user.set_password('superuser')
-        # user.save()
+        user = User.objects.create_superuser(email='admin@email.com', password=None)  # type: ignore
+        user.set_password('superuser')
+        user.save()
 
-        # initial_release = Release.objects.create(
-        #     release_version='0.0.0',
-        #     release_notes='Application Initialisation Release',
-        # )
+        initial_release = Release.objects.create(
+            release_version='0.0.0',
+            release_notes='Application Initialisation Release',
+        )
 
         # for model_type, definitions in data.items():
         #     for definition in definitions:
@@ -60,112 +60,112 @@ class Command(BaseCommand):
         #     release_version='0.1.0',
         #     release_notes='Initial release',
         # )
-        second_release = Release.objects.get(
-            release_version='0.1.0',
-        )
+        # second_release = Release.objects.get(
+        #     release_version='0.1.0',
+        # )
 
-        ReleaseChange.objects.create(
-            parent_release=second_release,
-            change_type=ReleaseChangeType.CREATE,
-            model_type='page',
-            syntax_json={
-                'page_name': 'list',
-                'modelschema_id': str(
-                    ReleaseSyntax.objects.filter(
-                        model_type='modelschema', syntax_json__model_name='Book'
-                    )
-                    .first()
-                    .syntax_json['id']
-                ),
-                'layout': [
-                    {
-                        'component': 'core@Header',
-                        'config': {
-                            'title': '<MODEL_NAME_PLURAL>',
-                            'tools': [
-                                {
-                                    'text': 'Create <MODEL_NAME>',
-                                    'to': '<MODEL_NAME_LOWER>/create',
-                                }
-                            ],
-                        },
-                    },
-                    {
-                        'component': 'core@Table',
-                        'config': {
-                            'fields': [
-                                {'field_name': 'id', 'header_name': 'ID'},
-                                {'field_name': 'book_name', 'header_name': 'Book Name'},
-                            ],
-                            'actions': [
-                                {
-                                    'text': 'View',
-                                    'to': '<MODEL_NAME_LOWER>/<OBJECT_ID>',
-                                }
-                            ],
-                        },
-                    },
-                ],
-            },
-        )
-        ReleaseChange.objects.create(
-            parent_release=second_release,
-            change_type=ReleaseChangeType.CREATE,
-            model_type='page',
-            syntax_json={
-                'page_name': 'create',
-                'modelschema_id': str(
-                    ReleaseSyntax.objects.filter(
-                        model_type='modelschema', syntax_json__model_name='Book'
-                    )
-                    .first()
-                    .syntax_json['id']
-                ),
-                'layout': [
-                    {
-                        'component': 'core@Header',
-                        'config': {
-                            'title': 'Create <MODEL_NAME>',
-                        },
-                    },
-                    {
-                        'component': 'core@Form',
-                        'config': {
-                            'to': '<MODEL_NAME_LOWER>/<OBJECT_ID>',
-                        },
-                    },
-                ],
-            },
-        )
-        ReleaseChange.objects.create(
-            parent_release=second_release,
-            change_type=ReleaseChangeType.CREATE,
-            model_type='page',
-            syntax_json={
-                'page_name': 'edit',
-                'modelschema_id': str(
-                    ReleaseSyntax.objects.filter(
-                        model_type='modelschema', syntax_json__model_name='Book'
-                    )
-                    .first()
-                    .syntax_json['id']
-                ),
-                'layout': [
-                    {
-                        'component': 'core@Header',
-                        'config': {
-                            'title': 'Edit <MODEL_NAME>',
-                        },
-                    },
-                    {
-                        'component': 'core@Form',
-                        'config': {
-                            'method': 'PATCH',
-                        },
-                    },
-                ],
-            },
-        )
+        # ReleaseChange.objects.create(
+        #     parent_release=second_release,
+        #     change_type=ReleaseChangeType.CREATE,
+        #     model_type='page',
+        #     syntax_json={
+        #         'page_name': 'list',
+        #         'modelschema_id': str(
+        #             ReleaseSyntax.objects.filter(
+        #                 model_type='modelschema', syntax_json__model_name='Book'
+        #             )
+        #             .first()
+        #             .syntax_json['id']
+        #         ),
+        #         'layout': [
+        #             {
+        #                 'component': 'core@Header',
+        #                 'config': {
+        #                     'title': '<MODEL_NAME_PLURAL>',
+        #                     'tools': [
+        #                         {
+        #                             'text': 'Create <MODEL_NAME>',
+        #                             'to': '<MODEL_NAME_LOWER>/create',
+        #                         }
+        #                     ],
+        #                 },
+        #             },
+        #             {
+        #                 'component': 'core@Table',
+        #                 'config': {
+        #                     'fields': [
+        #                         {'field_name': 'id', 'header_name': 'ID'},
+        #                         {'field_name': 'book_name', 'header_name': 'Book Name'},
+        #                     ],
+        #                     'actions': [
+        #                         {
+        #                             'text': 'View',
+        #                             'to': '<MODEL_NAME_LOWER>/<OBJECT_ID>',
+        #                         }
+        #                     ],
+        #                 },
+        #             },
+        #         ],
+        #     },
+        # )
+        # ReleaseChange.objects.create(
+        #     parent_release=second_release,
+        #     change_type=ReleaseChangeType.CREATE,
+        #     model_type='page',
+        #     syntax_json={
+        #         'page_name': 'create',
+        #         'modelschema_id': str(
+        #             ReleaseSyntax.objects.filter(
+        #                 model_type='modelschema', syntax_json__model_name='Book'
+        #             )
+        #             .first()
+        #             .syntax_json['id']
+        #         ),
+        #         'layout': [
+        #             {
+        #                 'component': 'core@Header',
+        #                 'config': {
+        #                     'title': 'Create <MODEL_NAME>',
+        #                 },
+        #             },
+        #             {
+        #                 'component': 'core@Form',
+        #                 'config': {
+        #                     'to': '<MODEL_NAME_LOWER>/<OBJECT_ID>',
+        #                 },
+        #             },
+        #         ],
+        #     },
+        # )
+        # ReleaseChange.objects.create(
+        #     parent_release=second_release,
+        #     change_type=ReleaseChangeType.CREATE,
+        #     model_type='page',
+        #     syntax_json={
+        #         'page_name': 'edit',
+        #         'modelschema_id': str(
+        #             ReleaseSyntax.objects.filter(
+        #                 model_type='modelschema', syntax_json__model_name='Book'
+        #             )
+        #             .first()
+        #             .syntax_json['id']
+        #         ),
+        #         'layout': [
+        #             {
+        #                 'component': 'core@Header',
+        #                 'config': {
+        #                     'title': 'Edit <MODEL_NAME>',
+        #                 },
+        #             },
+        #             {
+        #                 'component': 'core@Form',
+        #                 'config': {
+        #                     'method': 'PATCH',
+        #                 },
+        #             },
+        #         ],
+        #     },
+        # )
 
         # ReleaseChange.objects.create(
         #     parent_release=second_release,

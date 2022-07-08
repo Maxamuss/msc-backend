@@ -11,6 +11,7 @@ from db.models import FieldSchema, ModelSchema
 from layout.models import Page
 from packages.models import Package
 from workflows.models import Function, Workflow
+from .constants import CREATE_PAGE_LAYOUT, DELETE_PAGE_LAYOUT, EDIT_PAGE_LAYOUT, LIST_PAGE_LAYOUT
 
 MODEL_TYPES = [
     ModelSchema._meta.model_name,
@@ -301,13 +302,22 @@ class ReleaseChange(BaseModel):
         if existing_syntax:
             self.syntax_json['id'] = existing_syntax['id']
             self.syntax_json['modelschema_id'] = existing_syntax['modelschema_id']
+            create_pages = False
         else:
             self._generate_id()
 
-            if 'modelschema_id' not in self.syntax_json:
+            if (
+                self.model_type != ModelSchema._meta.model_name
+                and 'modelschema_id' not in self.syntax_json
+            ):
                 self.syntax_json['modelschema_id'] = None
 
+            create_pages = True
+
         super().save(*args, **kwargs)
+
+        if create_pages and self.model_type == ModelSchema._meta.model_name:
+            self._create_default_pages()
 
     def _get_existing_release_syntax(self, object_id):
         """
@@ -371,3 +381,28 @@ class ReleaseChange(BaseModel):
             object_id = uuid.uuid4()
 
         self.syntax_json['id'] = str(object_id)
+
+    def _create_default_pages(self):
+        """
+        Create the default pages for a model.
+        """
+        pages = [
+            ('list', LIST_PAGE_LAYOUT),
+            ('create', CREATE_PAGE_LAYOUT),
+            ('edit', EDIT_PAGE_LAYOUT),
+            ('delete', DELETE_PAGE_LAYOUT),
+        ]
+
+        for page_name, layout in pages:
+            syntax_json = {
+                'page_name': page_name,
+                'modelschema_id': self.syntax_json['id'],
+                'layout': layout,
+            }
+
+            ReleaseChange.objects.create(
+                parent_release=self.parent_release,
+                change_type=ReleaseChangeType.CREATE,
+                model_type='page',
+                syntax_json=syntax_json,
+            )
