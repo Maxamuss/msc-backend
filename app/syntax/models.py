@@ -182,7 +182,9 @@ class Release(MPTTModel):
                 if model_schema:
                     model_schema.delete()
 
-    def get_syntax_definitions(self, model_type, object_id=None, release=None, **kwargs):
+    def get_syntax_definitions(
+        self, model_type, object_id=None, release=None, include_changes=True, **kwargs
+    ):
         """
         modelschema_id=None,
         This method returns the all of the syntax definitions for a given model. However, a release
@@ -198,14 +200,16 @@ class Release(MPTTModel):
                 model_type, object_id=object_id, release=release, **kwargs
             ).values_list('syntax_json', flat=True)
         )
-        release_changes = self._get_release_changes(
-            model_type, object_id=object_id, release=release, **kwargs
-        )
 
-        if release_changes.exists():
-            syntax = self._merge_changes(release_syntaxes, release_changes)
-        else:
-            syntax = release_syntaxes
+        syntax = release_syntaxes
+
+        if include_changes:
+            release_changes = self._get_release_changes(
+                model_type, object_id=object_id, release=release, **kwargs
+            )
+
+            if release_changes.exists():
+                syntax = self._merge_changes(release_syntaxes, release_changes)
 
         if object_id:
             if len(syntax) == 1:
@@ -301,7 +305,10 @@ class ReleaseChange(BaseModel):
 
         if existing_syntax:
             self.syntax_json['id'] = existing_syntax['id']
-            self.syntax_json['modelschema_id'] = existing_syntax['modelschema_id']
+
+            if 'modelschema_id' in existing_syntax:
+                self.syntax_json['modelschema_id'] = existing_syntax['modelschema_id']
+
             create_pages = False
         else:
             self._generate_id()

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 
@@ -14,7 +12,7 @@ from accounts.models import User
 from accounts.serializers import UserSerializer
 from db.models import ModelSchema
 from syntax.models import Release, ReleaseChange, ReleaseChangeType, ReleaseSyntax
-from syntax.serializers import ReleaseSerializer
+from syntax.serializers import ReleaseChangeSerializer, ReleaseSerializer
 from .mixins import ReleaseMixin, ViewMixin
 
 
@@ -28,7 +26,7 @@ class LayoutAPIView(ReleaseMixin, APIView):
         model_ids = [x['id'] for x in models]
 
         pages = self.release.get_syntax_definitions(
-            'page', release=self.release, modelschema_id__in=model_ids
+            'page', release=self.release, modelschema_id__in=model_ids, include_changes=False
         )
 
         for page in pages:
@@ -162,38 +160,48 @@ class DeveloperAPIView(ViewMixin, APIView):
         """
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
-        object_id = self.create_release(ReleaseChangeType.CREATE)
-        schema = self.release.get_syntax_definitions(
+        object_id = self._create_release(ReleaseChangeType.CREATE)
+        data = self.release.get_syntax_definitions(
             self.model_name,
             object_id=object_id,
             release=self.release,
         )
-        return Response(schema, status=status.HTTP_200_OK)
+        return self._return_populated_response(data)
 
     def update(self):
         """
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
-        self.create_release(ReleaseChangeType.UPDATE)
-        schema = self.release.get_syntax_definitions(
+        self._create_release(ReleaseChangeType.UPDATE)
+        data = self.release.get_syntax_definitions(
             self.model_name,
             object_id=self.object_id,
             release=self.release,
         )
-        return Response(schema, status=status.HTTP_200_OK)
+        return self._return_populated_response(data)
 
     def destroy(self):
         """
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
-        self.create_release(ReleaseChangeType.DELETE)
-        return Response({}, status=status.HTTP_200_OK)
+        self._create_release(ReleaseChangeType.DELETE)
+        return self._return_populated_response({})
 
     # ---------------------------------------------------------------------------------------------
     # Util methods
     # ---------------------------------------------------------------------------------------------
 
-    def create_release(self, change_type):
+    def _return_populated_response(self, data):
+        release_change_count = self.release.release_changes.count()
+
+        response_data = {
+            'release_change_count': release_change_count,
+            'data': data,
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    def _create_release(self, change_type):
         release_change = ReleaseChange(
             parent_release=self.release,
             change_type=change_type,
@@ -216,7 +224,7 @@ class UserViewSet(ModelViewSet):
     serializer_class = UserSerializer
 
 
-class ReleaseViewSet(ViewSet):
+class ReleaseViewSet(ReleaseMixin, ViewSet):
     """
     API view to manage the releases for the application.
 
@@ -251,6 +259,20 @@ class ReleaseViewSet(ViewSet):
         instance = self.get_object()
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['get'], url_path='current')
+    def current_release(self, request):
+        release_change_count = self.release.release_changes.count()
+        serializer = ReleaseSerializer(self.release)
+
+        return Response({'release': serializer.data, 'release_change_count': release_change_count})
+
+    @action(detail=False, methods=['get'])
+    def changes(self, request):
+        release_changes = self.release.release_changes.all()
+
+        serializer = ReleaseChangeSerializer(release_changes, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['post'])
     def publish(self, request):

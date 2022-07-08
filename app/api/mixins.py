@@ -1,5 +1,7 @@
 from typing import Optional
 
+from django.utils.functional import cached_property
+
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -34,7 +36,7 @@ class QueryMixin:
 
 
 class ReleaseMixin:
-    @property
+    @cached_property
     def release(self) -> Release:
         """
         Return the Release object to be used in the request.

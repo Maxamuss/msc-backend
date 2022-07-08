@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Release
+from .models import Release, ReleaseChange
 
 
 class ReleaseSerializer(serializers.ModelSerializer):
@@ -49,3 +49,14 @@ class ReleaseSerializer(serializers.ModelSerializer):
             release_notes=validated_data['release_notes'],
             released_by=self.context['request'].user,
         )
+
+
+class ReleaseChangeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReleaseChange
+        fields = [
+            'change_type',
+            'model_type',
+            'syntax_json',
+            'created_at',
+        ]
