@@ -12,6 +12,7 @@ from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from accounts.models import User
 from accounts.serializers import UserSerializer
+from db.models import ModelSchema
 from syntax.models import Release, ReleaseChange, ReleaseChangeType, ReleaseSyntax
 from syntax.serializers import ReleaseSerializer
 from .mixins import ReleaseMixin, ViewMixin
@@ -19,52 +20,30 @@ from .mixins import ReleaseMixin, ViewMixin
 
 class LayoutAPIView(ReleaseMixin, APIView):
     """
-    API responsible for returning a page layout. All layouts are defined within a ReleaseSyntax
-    model.
+    Returns the application information.
     """
 
-    @property
-    def model_name(self) -> str:
-        return self.kwargs.get('model')
-
-    @property
-    def page_name(self) -> Optional[str]:
-        return self.kwargs.get('page')
-
     def get(self, *args, **kwargs):
-        if self.model_name == '__application__':
-            layout_data = self._get_application_config()
-        else:
-            layout_data = self._get_page_layout()
-
-        return Response(layout_data)
-
-    def _get_application_config(self):
         models = self.release.get_syntax_definitions('modelschema', release=self.release)
+        model_ids = [x['id'] for x in models]
 
-        for model in models:
-            model['pages'] = self.release.get_syntax_definitions(
-                'page', modelschema_id=model['id'], release=self.release
-            )
+        pages = self.release.get_syntax_definitions(
+            'page', release=self.release, modelschema_id__in=model_ids
+        )
 
-        return {'models': models}
+        for page in pages:
+            model_id = page['modelschema_id']
 
-    def _get_page_layout(self):
-        """
-        For the given model_name and page_name, return the layout syntax json.
-        """
-        release = Release.get_current_release()
+            model = [x for x in models if x['id'] == model_id][0]
 
-        modelschema_id = ReleaseSyntax.get_modelschema_id_from_name(release, self.model_name)
-        print(modelschema_id)
+            if 'pages' in model:
+                model['pages'].append(page)
+            else:
+                model['pages'] = [page]
 
-        if modelschema_id:
-            page = ReleaseSyntax.get_page(release, modelschema_id, self.page_name)
+        data = {'models': models}
 
-            if page:
-                return page.syntax_json['layout']
-
-        return {}
+        return Response(data)
 
 
 class DataAPIView(ViewMixin, APIView):
@@ -73,13 +52,11 @@ class DataAPIView(ViewMixin, APIView):
     """
 
     @cached_property
-    def model(self) -> str:
-        models = self.release.get_syntax_definitions(
-            'modelschema',
-            release=self.release,
-        )
+    def model(self):
+        model_schema = ModelSchema.objects.filter(name__iexact=self.kwargs.get('model')).first()
 
-        return self.kwargs.get('model')
+        if model_schema:
+            return model_schema.as_model()
 
     # ---------------------------------------------------------------------------------------------
     # Views

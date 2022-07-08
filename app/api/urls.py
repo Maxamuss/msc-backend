@@ -11,11 +11,7 @@ router.register(r'developer/user', views.UserViewSet, basename='users')
 
 urlpatterns = router.urls + [
     path(
-        'application/layout/<str:model>/',
-        views.LayoutAPIView.as_view(),
-    ),
-    path(
-        'application/layout/<str:model>/<str:page>/',
+        'application/layout/',
         views.LayoutAPIView.as_view(),
     ),
     path(

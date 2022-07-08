@@ -59,11 +59,6 @@ class ReleaseSyntax(BaseModel):
         """
         Return the id of a modelschema by its model_name field.
         """
-        print(
-            cls.objects.filter(
-                release=release, model_type='modelschema', syntax_json__model_name=model_name
-            )
-        )
         release_syntax = cls.objects.filter(
             release=release, model_type='modelschema', syntax_json__model_name=model_name
         ).first()
