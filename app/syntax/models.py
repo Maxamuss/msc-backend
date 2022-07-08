@@ -7,7 +7,7 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from accounts.models import User
 from core.models import BaseModel
-from db.models import ModelSchema
+from db.models import FieldSchema, ModelSchema
 from layout.models import Page
 from packages.models import Package
 from workflows.models import Function, Workflow
@@ -112,39 +112,79 @@ class Release(MPTTModel):
         return cls.objects.get(current_release=True)
 
     def save(self, *args, **kwargs):
-        """
-        When a Release is created, we need to pull in all of the changes, merge it with the last
-        parent Releases' syntax and add it to the model.
-
-        Then, the changes are applied to the models.
-        """
         is_new = self.pk is None
 
         super().save(*args, **kwargs)
 
         if is_new:
-            Release.objects.all().update(current_release=False)
-            Release.objects.filter(id=self.id).update(current_release=True)
+            self._create_release()
 
-            if self.parent:
-                release_syntax_models = []
+    def _create_release(self):
+        """
+        This method is called when the release is first created. When a Release is created, we need
+        to pull in all of the changes, merge it with the last parent Releases' syntax and add it to
+        the model.
+        """
+        Release.objects.all().update(current_release=False)
+        Release.objects.filter(id=self.id).update(current_release=True)
 
-                for model_type in MODEL_TYPES:
-                    syntaxes = self.get_syntax_definitions(model_type, release=self.parent)
+        if self.parent:
+            # Create the new syntax from the existing and changes and add to ReleaseSyntax model.
+            release_syntax_models = []
 
-                    for syntax_json in syntaxes:
-                        if syntax_json:
-                            release_syntax_models.append(
-                                ReleaseSyntax(
-                                    release=self,
-                                    model_type=model_type,
-                                    syntax_json=syntax_json,
-                                )
+            for model_type in MODEL_TYPES:
+                syntaxes = self.get_syntax_definitions(model_type, release=self.parent)
+
+                for syntax_json in syntaxes:
+                    if syntax_json:
+                        release_syntax_models.append(
+                            ReleaseSyntax(
+                                release=self,
+                                model_type=model_type,
+                                syntax_json=syntax_json,
                             )
+                        )
 
-                ReleaseSyntax.objects.bulk_create(release_syntax_models)
+            ReleaseSyntax.objects.bulk_create(release_syntax_models)
 
-            ReleaseChange.objects.filter(parent_release=self.parent).delete()
+            # Apply database changes.
+            model_schema_changes = self._get_release_changes(
+                ModelSchema._meta.model_name, release=self.parent
+            )
+            self._apply_database_migrations(model_schema_changes)
+
+        ReleaseChange.objects.filter(parent_release=self.parent).delete()
+
+    def _apply_database_migrations(self, release_changes):
+        """
+        Given the ReleaseChanges for modelschemas, applying the updates to the database. Models are
+        tracked using the ModelSchema model (within the db app):
+         - CREATE: create a new model with all fields.
+        """
+        for release_change in release_changes:
+            if release_change.change_type == ReleaseChangeType.CREATE:
+                # Create model schema and fields.
+                model_schema = ModelSchema.objects.create(
+                    id=release_change.syntax_json['id'],
+                    name=release_change.syntax_json['model_name'],
+                )
+                for field in release_change.syntax_json.get('fields', []):
+                    FieldSchema.objects.create(
+                        model_schema=model_schema,
+                        name=field['field_name'],
+                        class_name='django.db.models.TextField',
+                    )
+
+            elif release_change.change_type == ReleaseChangeType.UPDATE:
+                pass
+            elif release_change.change_type == ReleaseChangeType.DELETE:
+                # Delete model schema (and fields by cascade).
+                model_schema = ModelSchema.objects.filter(
+                    id=release_change.syntax_json['id'],
+                ).first()
+
+                if model_schema:
+                    model_schema.delete()
 
     def get_syntax_definitions(self, model_type, object_id=None, release=None, **kwargs):
         """

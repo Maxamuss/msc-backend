@@ -56,24 +56,24 @@ class Command(BaseCommand):
                 if model_type == 'modelschema':
                     model_ids[definition['model_name']] = release_change.syntax_json['id']
 
-        second_release = Release.objects.create(
-            parent=initial_release,
-            release_version='0.1.0',
-            release_notes='Initial release',
-        )
+        # second_release = Release.objects.create(
+        #     parent=initial_release,
+        #     release_version='0.1.0',
+        #     release_notes='Initial release',
+        # )
 
-        ReleaseChange.objects.create(
-            parent_release=second_release,
-            change_type=ReleaseChangeType.CREATE,
-            model_type='page',
-            syntax_json={'page_name': 'list', 'modelschema_id': str(model_ids['Book'])},
-        )
-        ReleaseChange.objects.create(
-            parent_release=second_release,
-            change_type=ReleaseChangeType.CREATE,
-            model_type='page',
-            syntax_json={'page_name': 'list', 'modelschema_id': str(model_ids['Rental'])},
-        )
+        # ReleaseChange.objects.create(
+        #     parent_release=second_release,
+        #     change_type=ReleaseChangeType.CREATE,
+        #     model_type='page',
+        #     syntax_json={'page_name': 'list', 'modelschema_id': str(model_ids['Book'])},
+        # )
+        # ReleaseChange.objects.create(
+        #     parent_release=second_release,
+        #     change_type=ReleaseChangeType.CREATE,
+        #     model_type='page',
+        #     syntax_json={'page_name': 'list', 'modelschema_id': str(model_ids['Rental'])},
+        # )
         # ReleaseChange.objects.create(
         #     parent_release=second_release,
         #     change_type=ReleaseChangeType.DELETE,
