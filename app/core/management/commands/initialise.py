@@ -55,12 +55,11 @@ class Command(BaseCommand):
         #             syntax_json=definition,
         #         )
 
-        # second_release = Release.objects.create(
+        # second_release, _ = Release.objects.get_or_create(
         #     parent=initial_release,
         #     release_version='0.1.0',
         #     release_notes='Initial release',
         # )
-
         second_release = Release.objects.get(
             release_version='0.1.0',
         )
@@ -83,6 +82,12 @@ class Command(BaseCommand):
                         'component': 'core@Header',
                         'config': {
                             'title': '<MODEL_NAME_PLURAL>',
+                            'tools': [
+                                {
+                                    'text': 'Create <MODEL_NAME>',
+                                    'to': '<MODEL_NAME_LOWER>/create',
+                                }
+                            ],
                         },
                     },
                     {
@@ -92,11 +97,76 @@ class Command(BaseCommand):
                                 {'field_name': 'id', 'header_name': 'ID'},
                                 {'field_name': 'book_name', 'header_name': 'Book Name'},
                             ],
+                            'actions': [
+                                {
+                                    'text': 'View',
+                                    'to': '<MODEL_NAME_LOWER>/<OBJECT_ID>',
+                                }
+                            ],
                         },
                     },
                 ],
             },
         )
+        ReleaseChange.objects.create(
+            parent_release=second_release,
+            change_type=ReleaseChangeType.CREATE,
+            model_type='page',
+            syntax_json={
+                'page_name': 'create',
+                'modelschema_id': str(
+                    ReleaseSyntax.objects.filter(
+                        model_type='modelschema', syntax_json__model_name='Book'
+                    )
+                    .first()
+                    .syntax_json['id']
+                ),
+                'layout': [
+                    {
+                        'component': 'core@Header',
+                        'config': {
+                            'title': 'Create <MODEL_NAME>',
+                        },
+                    },
+                    {
+                        'component': 'core@Form',
+                        'config': {
+                            'to': '<MODEL_NAME_LOWER>/<OBJECT_ID>',
+                        },
+                    },
+                ],
+            },
+        )
+        ReleaseChange.objects.create(
+            parent_release=second_release,
+            change_type=ReleaseChangeType.CREATE,
+            model_type='page',
+            syntax_json={
+                'page_name': 'edit',
+                'modelschema_id': str(
+                    ReleaseSyntax.objects.filter(
+                        model_type='modelschema', syntax_json__model_name='Book'
+                    )
+                    .first()
+                    .syntax_json['id']
+                ),
+                'layout': [
+                    {
+                        'component': 'core@Header',
+                        'config': {
+                            'title': 'Edit <MODEL_NAME>',
+                        },
+                    },
+                    {
+                        'component': 'core@Form',
+                        'config': {
+                            'method': 'PATCH',
+                        },
+                    },
+                ],
+            },
+        )
+
         # ReleaseChange.objects.create(
         #     parent_release=second_release,
         #     change_type=ReleaseChangeType.CREATE,

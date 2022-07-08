@@ -62,13 +62,14 @@ class HTTPMixin:
         if not self.object_id:  # type: ignore
             return self.create()  # type: ignore
 
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
+        print(self.object_id)
         if self.object_id:  # type: ignore
             return self.update()  # type: ignore
 
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, *args, **kwargs):
         return self.put(request, *args, **kwargs)

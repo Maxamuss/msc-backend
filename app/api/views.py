@@ -70,7 +70,7 @@ class DataAPIView(ViewMixin, APIView):
         return paginator.get_paginated_response(serializer.data)
 
     def detail(self):
-        resource = get_object_or_404(self.get_queryset(), id=self.model_id)
+        resource = get_object_or_404(self.get_queryset(), id=self.object_id)
         serializer = self.get_serializer(resource)
         return Response(serializer.data)
 
@@ -82,7 +82,7 @@ class DataAPIView(ViewMixin, APIView):
 
     def update(self):
         partial = self.request.method.lower() == 'patch'
-        resource = get_object_or_404(self.get_queryset(), id=self.model_id)
+        resource = get_object_or_404(self.get_queryset(), id=self.object_id)
         serializer = self.get_serializer(resource, data=self.request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         serializer.save()

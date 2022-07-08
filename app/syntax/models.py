@@ -222,7 +222,6 @@ class Release(MPTTModel):
             syntax = syntax.filter(syntax_json__id=object_id)
 
         if kwargs:
-            print(kwargs)
             syntax = syntax.filter(**kwargs)
 
         return syntax
