@@ -146,9 +146,7 @@ class Release(MPTTModel):
 
             ReleaseChange.objects.filter(parent_release=self.parent).delete()
 
-    def get_syntax_definitions(
-        self, model_type, object_id=None, release=None, ordering=None, **kwargs
-    ):
+    def get_syntax_definitions(self, model_type, object_id=None, release=None, **kwargs):
         """
         modelschema_id=None,
         This method returns the all of the syntax definitions for a given model. However, a release
@@ -172,9 +170,6 @@ class Release(MPTTModel):
             syntax = self._merge_changes(release_syntaxes, release_changes)
         else:
             syntax = release_syntaxes
-
-        if ordering:
-            syntax = sorted(syntax, key=lambda x: x[ordering])
 
         if object_id:
             if len(syntax) == 1:

@@ -14,7 +14,7 @@ from accounts.models import User
 from accounts.serializers import UserSerializer
 from syntax.models import Release, ReleaseChange, ReleaseChangeType, ReleaseSyntax
 from syntax.serializers import ReleaseSerializer
-from .mixins import QueryMixin, ReleaseMixin, ViewMixin
+from .mixins import ReleaseMixin, ViewMixin
 
 
 class LayoutAPIView(ReleaseMixin, APIView):
@@ -40,13 +40,11 @@ class LayoutAPIView(ReleaseMixin, APIView):
         return Response(layout_data)
 
     def _get_application_config(self):
-        models = self.release.get_syntax_definitions(
-            'modelschema', release=self.release, ordering='model_name'
-        )
+        models = self.release.get_syntax_definitions('modelschema', release=self.release)
 
         for model in models:
             model['pages'] = self.release.get_syntax_definitions(
-                'page', modelschema_id=model['id'], release=self.release, ordering='page_name'
+                'page', modelschema_id=model['id'], release=self.release
             )
 
         return {'models': models}
@@ -137,17 +135,17 @@ class DataAPIView(ViewMixin, APIView):
         return queryset.order_by('-created_at')
 
     def get_serializer(self, *args, **kwargs):
-        serializer_class = self.generic_serializer(self.model)
+        serializer_class = self.generic_serializer()
         kwargs.setdefault(
             'context',
             {'request': self.request, 'format': self.format_kwarg, 'view': self},
         )
         return serializer_class(*args, **kwargs)
 
-    def generic_serializer(self, serializer_model):
+    def generic_serializer(self):
         class GenericSerializer(serializers.ModelSerializer):
             class Meta:
-                model = serializer_model
+                model = self.model
                 fields = '__all__'
 
         return GenericSerializer
@@ -233,11 +231,12 @@ class DeveloperAPIView(ViewMixin, APIView):
 class UserViewSet(ModelViewSet):
     """
     API viewset to manage user accounts.
+    # permission_classes = [IsAccountAdminOrReadOnly]
+
     """
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # permission_classes = [IsAccountAdminOrReadOnly]
 
 
 class ReleaseViewSet(ViewSet):
