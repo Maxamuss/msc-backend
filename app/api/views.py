@@ -223,6 +223,9 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+    def patch(self, request, *args, **kwargs):
+        return self.patch(request, *args, **kwargs)
+
 
 class ReleaseViewSet(ReleaseMixin, ViewSet):
     """
@@ -276,11 +279,17 @@ class ReleaseViewSet(ReleaseMixin, ViewSet):
 
     @action(detail=False, methods=['post'])
     def publish(self, request):
-        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if not self.release.release_changes.all().exists():
+            return Response(
+                {'error': 'There have been no changes made to the current release.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        if serializer.is_valid():
-            release = serializer.save()
-            serializer = self.serializer_class(release)
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        release = Release.objects.create(
+            parent=self.release,
+            release_version='test',
+            release_notes='',
+            released_by=User.objects.all()[0],
+        )
+        serializer = self.serializer_class(release)
+        return Response(serializer.data)

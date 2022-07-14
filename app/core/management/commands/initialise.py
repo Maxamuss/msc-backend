@@ -46,20 +46,20 @@ class Command(BaseCommand):
             release_notes='Application Initialisation Release',
         )
 
-        # for model_type, definitions in data.items():
-        #     for definition in definitions:
-        #         ReleaseChange.objects.create(
-        #             parent_release=initial_release,
-        #             change_type=ReleaseChangeType.CREATE,
-        #             model_type=model_type,
-        #             syntax_json=definition,
-        #         )
+        for model_type, definitions in data.items():
+            for definition in definitions:
+                ReleaseChange.objects.create(
+                    parent_release=initial_release,
+                    change_type=ReleaseChangeType.CREATE,
+                    model_type=model_type,
+                    syntax_json=definition,
+                )
 
-        # second_release, _ = Release.objects.get_or_create(
-        #     parent=initial_release,
-        #     release_version='0.1.0',
-        #     release_notes='Initial release',
-        # )
+        second_release, _ = Release.objects.get_or_create(
+            parent=initial_release,
+            release_version='0.1.0',
+            release_notes='Initial release',
+        )
         # second_release = Release.objects.get(
         #     release_version='0.1.0',
         # )
