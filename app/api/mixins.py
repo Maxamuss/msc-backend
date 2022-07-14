@@ -67,7 +67,6 @@ class HTTPMixin:
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
-        print(self.object_id)
         if self.object_id:  # type: ignore
             return self.update()  # type: ignore
 
@@ -77,7 +76,7 @@ class HTTPMixin:
         return self.put(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
-        pass
+        return self.destroy()  # type: ignore
 
 
 class ViewMixin(QueryMixin, ReleaseMixin, HTTPMixin):

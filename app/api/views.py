@@ -166,7 +166,7 @@ class DeveloperAPIView(ViewMixin, APIView):
             object_id=object_id,
             release=self.release,
         )
-        return self._return_populated_response(data)
+        return Response(self._get_response_data(data), status=status.HTTP_201_CREATED)
 
     def update(self):
         """
@@ -178,20 +178,20 @@ class DeveloperAPIView(ViewMixin, APIView):
             object_id=self.object_id,
             release=self.release,
         )
-        return self._return_populated_response(data)
+        return Response(self._get_response_data(data), status=status.HTTP_200_OK)
 
     def destroy(self):
         """
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
         self._create_release(ReleaseChangeType.DELETE)
-        return self._return_populated_response({})
+        return Response(self._get_response_data({}), status=status.HTTP_204_NO_CONTENT)
 
     # ---------------------------------------------------------------------------------------------
     # Util methods
     # ---------------------------------------------------------------------------------------------
 
-    def _return_populated_response(self, data):
+    def _get_response_data(self, data):
         release_change_count = self.release.release_changes.count()
 
         response_data = {
@@ -199,7 +199,7 @@ class DeveloperAPIView(ViewMixin, APIView):
             'data': data,
         }
 
-        return Response(response_data, status=status.HTTP_200_OK)
+        return response_data
 
     def _create_release(self, change_type):
         release_change = ReleaseChange(
