@@ -294,14 +294,15 @@ class ReleaseChange(BaseModel):
         return f'{self.change_type} {self.model_type} {self.syntax_json["id"]}'
 
     def save(self, *args, object_id=None, **kwargs):
-        # self.full_clean()
         if change := self.get_existing_release_change(object_id):
-            existing_syntax = change.syntax_json
+            existing_syntax = dict(change.syntax_json)
             change.delete()
         elif change := self._get_existing_release_syntax(object_id):
-            existing_syntax = change.syntax_json
+            existing_syntax = dict(change.syntax_json)
         else:
             existing_syntax = None
+
+        self.syntax_json = dict(self.syntax_json)
 
         if existing_syntax:
             self.syntax_json['id'] = existing_syntax['id']

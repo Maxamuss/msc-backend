@@ -1,3 +1,7 @@
+import random
+import string
+
+from django.contrib.auth.models import Group
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 
@@ -9,7 +13,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from accounts.models import User
-from accounts.serializers import UserSerializer
+from accounts.serializers import GroupSerializer, PermissionSerializer, UserSerializer
 from db.models import ModelSchema
 from syntax.models import Release, ReleaseChange, ReleaseChangeType, ReleaseSyntax
 from syntax.serializers import ReleaseChangeSerializer, ReleaseSerializer
@@ -185,7 +189,7 @@ class DeveloperAPIView(ViewMixin, APIView):
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
         self._create_release(ReleaseChangeType.DELETE)
-        return Response(self._get_response_data({}), status=status.HTTP_204_NO_CONTENT)
+        return Response(self._get_response_data(None), status=status.HTTP_204_NO_CONTENT)
 
     # ---------------------------------------------------------------------------------------------
     # Util methods
@@ -195,6 +199,7 @@ class DeveloperAPIView(ViewMixin, APIView):
         release_change_count = self.release.release_changes.count()
 
         response_data = {
+            'release': ReleaseSerializer(self.release).data,
             'release_change_count': release_change_count,
             'data': data,
         }
@@ -217,14 +222,83 @@ class UserViewSet(ModelViewSet):
     """
     API viewset to manage user accounts.
     # permission_classes = [IsAccountAdminOrReadOnly]
-
     """
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def patch(self, request, *args, **kwargs):
-        return self.patch(request, *args, **kwargs)
+    @action(detail=True, methods=['get'])
+    def groups(self, request, pk=None):
+        user = get_object_or_404(User.objects.all(), pk=pk)
+        groups = user.groups.order_by('name')
+
+        serializer = GroupSerializer(groups, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='add-to-group')
+    def add_group(self, request, pk=None):
+        user = get_object_or_404(User.objects.all(), pk=pk)
+        group = get_object_or_404(Group.objects.all(), pk=request.data.get('group_id'))
+        group.user_set.add(user)  # type: ignore
+
+        return Response({})
+
+    @action(detail=True, methods=['post'], url_path='remove-from-group')
+    def remove_group(self, request, pk=None):
+        user = get_object_or_404(User.objects.all(), pk=pk)
+        group = get_object_or_404(Group.objects.all(), pk=request.data.get('group_id'))
+        group.user_set.remove(user)  # type: ignore
+
+        return Response({})
+
+    @action(detail=True, methods=['get'])
+    def permissions(self, request, pk=None):
+        user = get_object_or_404(User.objects.all(), pk=pk)
+        permissions = user.user_permissions.order_by('name')
+
+        serializer = PermissionSerializer(permissions, many=True)
+        return Response(serializer.data)
+
+
+class GroupViewSet(ModelViewSet):
+    """
+    API viewset to manage groups.
+    """
+
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+
+    @action(detail=True, methods=['get'])
+    def users(self, request, pk=None):
+        group = get_object_or_404(Group.objects.all(), pk=pk)
+        users = group.user_set.order_by('email')  # type: ignore
+
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='add-user')
+    def add_user(self, request, pk=None):
+        group = get_object_or_404(Group.objects.all(), pk=pk)
+        user = get_object_or_404(User.objects.all(), pk=request.data.get('user_id'))
+        group.user_set.add(user)  # type: ignore
+
+        return Response({})
+
+    @action(detail=True, methods=['post'], url_path='remove-user')
+    def remove_user(self, request, pk=None):
+        group = get_object_or_404(Group.objects.all(), pk=pk)
+        user = get_object_or_404(User.objects.all(), pk=request.data.get('user_id'))
+        group.user_set.remove(user)  # type: ignore
+
+        return Response({})
+
+    @action(detail=True, methods=['get'])
+    def permissions(self, request, pk=None):
+        group = get_object_or_404(Group.objects.all(), pk=pk)
+        permissions = group.permissions.order_by('name')
+
+        serializer = PermissionSerializer(permissions, many=True)
+        return Response(serializer.data)
 
 
 class ReleaseViewSet(ReleaseMixin, ViewSet):
@@ -287,7 +361,9 @@ class ReleaseViewSet(ReleaseMixin, ViewSet):
 
         release = Release.objects.create(
             parent=self.release,
-            release_version='test',
+            release_version=''.join(
+                random.choice(string.ascii_uppercase + string.digits) for _ in range(5)
+            ),
             release_notes='',
             released_by=User.objects.all()[0],
         )
