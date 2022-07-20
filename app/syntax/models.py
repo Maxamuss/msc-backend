@@ -157,23 +157,62 @@ class Release(MPTTModel):
         tracked using the ModelSchema model (within the db app):
          - CREATE: create a new model with all fields.
         """
+
+        def get_class_name(field_type):
+            if field_type == 'float':
+                return 'django.db.models.FloatField'
+            elif field_type == 'datetime':
+                return 'django.db.models.DateTimeField'
+            elif field_type == 'fk':
+                return 'django.db.models.ForeignKey'
+            else:
+                return 'django.db.models.TextField'
+
+        def get_kwargs(field):
+            if field['field_type'] == 'fk':
+                return {
+                    'on_delete': models.CASCADE,
+                    'to': ModelSchema.objects.get(id=field["modelschema_id"]).name,
+                    'null': not field['required'],
+                }
+            else:
+                return {
+                    'null': not field['required'],
+                }
+
+        def create_field(model_schema, field):
+            FieldSchema.objects.create(
+                model_schema=model_schema,
+                name=field['field_name'],
+                class_name=get_class_name(field['field_type']),
+                kwargs=get_kwargs(field),
+            )
+            print(field['field_name'])
+
         for release_change in release_changes:
             if release_change.change_type == ReleaseChangeType.CREATE:
+                print('CREATE')
                 # Create model schema and fields.
                 model_schema = ModelSchema.objects.create(
                     id=release_change.syntax_json['id'],
                     name=release_change.syntax_json['model_name'],
                 )
+                print(model_schema.name)
                 for field in release_change.syntax_json.get('fields', []):
-                    FieldSchema.objects.create(
-                        model_schema=model_schema,
-                        name=field['field_name'],
-                        class_name='django.db.models.TextField',
-                    )
+                    create_field(model_schema, field)
 
             elif release_change.change_type == ReleaseChangeType.UPDATE:
-                pass
+                print('UPDATE')
+                model_schema = ModelSchema.objects.get(id=release_change.syntax_json['id'])
+
+                existing_fields = model_schema.fields.all().values_list('name', flat=True)
+
+                for field in release_change.syntax_json.get('fields', []):
+                    if field['field_name'] not in existing_fields:
+                        create_field(model_schema, field)
+
             elif release_change.change_type == ReleaseChangeType.DELETE:
+                print('DELETE')
                 # Delete model schema (and fields by cascade).
                 model_schema = ModelSchema.objects.filter(
                     id=release_change.syntax_json['id'],
@@ -294,13 +333,16 @@ class ReleaseChange(BaseModel):
         return f'{self.change_type} {self.model_type} {self.syntax_json["id"]}'
 
     def save(self, *args, object_id=None, **kwargs):
-        if change := self.get_existing_release_change(object_id):
-            existing_syntax = dict(change.syntax_json)
-            change.delete()
-        elif change := self._get_existing_release_syntax(object_id):
-            existing_syntax = dict(change.syntax_json)
+        if release_change := self.get_existing_release_change(object_id):
+            existing_syntax = dict(release_change.syntax_json)
+            release_change.delete()
+            previous_change_type = release_change.change_type
+        elif release_syntax := self._get_existing_release_syntax(object_id):
+            existing_syntax = dict(release_syntax.syntax_json)
+            previous_change_type = None
         else:
             existing_syntax = None
+            previous_change_type = None
 
         self.syntax_json = dict(self.syntax_json)
 
@@ -309,6 +351,27 @@ class ReleaseChange(BaseModel):
 
             if 'modelschema_id' in existing_syntax:
                 self.syntax_json['modelschema_id'] = existing_syntax['modelschema_id']
+
+            # If the resource does not exist in the db yet, and prev change was create, make sure
+            # this is also a create.
+            if (
+                previous_change_type == ReleaseChangeType.CREATE
+                and self.change_type == ReleaseChangeType.UPDATE
+            ):
+                self.change_type = ReleaseChangeType.CREATE
+
+            # If the resource does not exist in the db yet, don't create change and delete related
+            # changes.
+            if (
+                previous_change_type == ReleaseChangeType.CREATE
+                and self.change_type == ReleaseChangeType.DELETE
+            ):
+                (
+                    ReleaseChange.objects.annotate(modelschema_id=F('syntax_json__modelschema_id'))
+                    .filter(modelschema_id=self.syntax_json['id'])
+                    .delete()
+                )
+                return
 
             create_pages = False
         else:

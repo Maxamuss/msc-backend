@@ -14,10 +14,6 @@ LIST_PAGE_LAYOUT = [
     {
         'component': 'core@Table',
         'config': {
-            'fields': [
-                {'field_name': 'id', 'header_name': 'ID'},
-                {'field_name': 'book_name', 'header_name': 'Book Name'},
-            ],
             'actions': [
                 {
                     'text': 'View',

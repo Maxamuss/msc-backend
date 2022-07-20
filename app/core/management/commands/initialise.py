@@ -8,17 +8,9 @@ from syntax.models import Release, ReleaseChange, ReleaseChangeType, ReleaseSynt
 data = {
     'modelschema': [
         {
-            'model_name': 'Book',
+            'model_name': 'Author',
             'fields': [
-                {'field_name': 'book_name', 'field_type': 'text', 'required': True},
-                {'field_name': 'author', 'field_type': 'text', 'required': True},
-            ],
-        },
-        {
-            'model_name': 'Rental',
-            'fields': [
-                {'field_name': 'customer_name', 'field_type': 'text', 'required': True},
-                {'field_name': 'loaned_at', 'field_type': 'datetime', 'required': True},
+                {'field_name': 'author_name', 'field_type': 'text', 'required': True},
             ],
         },
     ],
@@ -43,7 +35,6 @@ class Command(BaseCommand):
 
         initial_release = Release.objects.create(
             release_version='0.0.0',
-            release_notes='Application Initialisation Release',
         )
 
         for model_type, definitions in data.items():
@@ -55,11 +46,79 @@ class Command(BaseCommand):
                     syntax_json=definition,
                 )
 
-        second_release, _ = Release.objects.get_or_create(
+        second_release = Release.objects.create(
             parent=initial_release,
             release_version='0.1.0',
-            release_notes='Initial release',
         )
+
+        author_modelschema_id = (
+            ReleaseSyntax.objects.filter(
+                model_type='modelschema', syntax_json__model_name='Author'
+            )
+            .first()
+            .syntax_json['id']
+        )
+
+        book_schema = {
+            'model_name': 'Book',
+            'fields': [
+                {
+                    'field_name': 'book_name',
+                    'field_type': 'text',
+                    'required': True,
+                },
+                {
+                    'field_name': 'author',
+                    'field_type': 'fk',
+                    'required': True,
+                    'modelschema_id': author_modelschema_id,
+                },
+            ],
+        }
+        ReleaseChange.objects.create(
+            parent_release=second_release,
+            change_type=ReleaseChangeType.CREATE,
+            model_type='modelschema',
+            syntax_json=book_schema,
+        )
+        third_release = Release.objects.create(
+            parent=second_release,
+            release_version='0.2.0',
+        )
+
+        book_modelschema_id = (
+            ReleaseSyntax.objects.filter(model_type='modelschema', syntax_json__model_name='Book')
+            .first()
+            .syntax_json['id']
+        )
+        rental_schema = {
+            'model_name': 'Rental',
+            'fields': [
+                {
+                    'field_name': 'author',
+                    'field_type': 'fk',
+                    'modelschema_id': book_modelschema_id,
+                    'required': True,
+                },
+                {
+                    'field_name': 'customer_name',
+                    'field_type': 'text',
+                    'required': True,
+                },
+                {'field_name': 'loaned_at', 'field_type': 'datetime', 'required': True},
+            ],
+        }
+        ReleaseChange.objects.create(
+            parent_release=third_release,
+            change_type=ReleaseChangeType.CREATE,
+            model_type='modelschema',
+            syntax_json=rental_schema,
+        )
+        forth_release = Release.objects.create(
+            parent=third_release,
+            release_version='0.3.0',
+        )
+
         # second_release = Release.objects.get(
         #     release_version='0.1.0',
         # )

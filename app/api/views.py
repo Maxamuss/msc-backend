@@ -26,7 +26,9 @@ class LayoutAPIView(ReleaseMixin, APIView):
     """
 
     def get(self, *args, **kwargs):
-        models = self.release.get_syntax_definitions('modelschema', release=self.release)
+        models = self.release.get_syntax_definitions(
+            'modelschema', release=self.release, include_changes=False
+        )
         model_ids = [x['id'] for x in models]
 
         pages = self.release.get_syntax_definitions(
@@ -189,7 +191,7 @@ class DeveloperAPIView(ViewMixin, APIView):
         This method takes a syntax definition, validates it and adds it as a ReleaseChange.
         """
         self._create_release(ReleaseChangeType.DELETE)
-        return Response(self._get_response_data(None), status=status.HTTP_204_NO_CONTENT)
+        return Response(self._get_response_data(None), status=status.HTTP_200_OK)
 
     # ---------------------------------------------------------------------------------------------
     # Util methods
