@@ -5,7 +5,8 @@ from django.utils.functional import cached_property
 from rest_framework import status
 from rest_framework.response import Response
 
-from syntax.models import Release
+from syntax.models import Release, ReleaseChange
+from syntax.serializers import ReleaseSerializer
 
 
 class QueryMixin:
@@ -52,6 +53,28 @@ class ReleaseMixin:
             release = Release.get_current_release()
 
         return release
+
+    def _get_response_data(self, data):
+        release_change_count = self.release.release_changes.count()
+
+        response_data = {
+            'release': ReleaseSerializer(self.release).data,
+            'release_change_count': release_change_count,
+            'data': data,
+        }
+
+        return response_data
+
+    def _create_release(self, change_type, model_type=None, syntax_json=None, object_id=None):
+        release_change = ReleaseChange(
+            parent_release=self.release,
+            change_type=change_type,
+            model_type=model_type or self.model_name,
+            syntax_json=syntax_json or self.request.data,
+        )
+        release_change.save(object_id=object_id or self.object_id)
+
+        return release_change.syntax_json['id']
 
 
 class HTTPMixin:

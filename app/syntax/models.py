@@ -14,11 +14,11 @@ from workflows.models import Function, Workflow
 from .constants import CREATE_PAGE_LAYOUT, DELETE_PAGE_LAYOUT, EDIT_PAGE_LAYOUT, LIST_PAGE_LAYOUT
 
 MODEL_TYPES = [
-    ModelSchema._meta.model_name,
-    Page._meta.model_name,
-    Package._meta.model_name,
-    Workflow._meta.model_name,
-    Function._meta.model_name,
+    'modelschema',
+    'page',
+    'workflow',
+    'function',
+    'permission',
 ]
 
 
@@ -187,22 +187,18 @@ class Release(MPTTModel):
                 class_name=get_class_name(field['field_type']),
                 kwargs=get_kwargs(field),
             )
-            print(field['field_name'])
 
         for release_change in release_changes:
             if release_change.change_type == ReleaseChangeType.CREATE:
-                print('CREATE')
                 # Create model schema and fields.
                 model_schema = ModelSchema.objects.create(
                     id=release_change.syntax_json['id'],
                     name=release_change.syntax_json['model_name'],
                 )
-                print(model_schema.name)
                 for field in release_change.syntax_json.get('fields', []):
                     create_field(model_schema, field)
 
             elif release_change.change_type == ReleaseChangeType.UPDATE:
-                print('UPDATE')
                 model_schema = ModelSchema.objects.get(id=release_change.syntax_json['id'])
 
                 existing_fields = model_schema.fields.all().values_list('name', flat=True)
@@ -212,7 +208,6 @@ class Release(MPTTModel):
                         create_field(model_schema, field)
 
             elif release_change.change_type == ReleaseChangeType.DELETE:
-                print('DELETE')
                 # Delete model schema (and fields by cascade).
                 model_schema = ModelSchema.objects.filter(
                     id=release_change.syntax_json['id'],
@@ -221,11 +216,14 @@ class Release(MPTTModel):
                 if model_schema:
                     model_schema.delete()
 
+                    ReleaseSyntax.objects.filter(
+                        syntax_json__modelschema_id=release_change.syntax_json['id']
+                    ).delete()
+
     def get_syntax_definitions(
         self, model_type, object_id=None, release=None, include_changes=True, **kwargs
     ):
         """
-        modelschema_id=None,
         This method returns the all of the syntax definitions for a given model. However, a release
         only contains the current committed changes to an application. This means there may exist
         updated to one of the syntaxes within a ReleaseChange model.
@@ -389,6 +387,7 @@ class ReleaseChange(BaseModel):
 
         if create_pages and self.model_type == ModelSchema._meta.model_name:
             self._create_default_pages()
+            self._create_default_permissions()
 
     def _get_existing_release_syntax(self, object_id):
         """
@@ -475,5 +474,30 @@ class ReleaseChange(BaseModel):
                 parent_release=self.parent_release,
                 change_type=ReleaseChangeType.CREATE,
                 model_type='page',
+                syntax_json=syntax_json,
+            )
+
+    def _create_default_permissions(self):
+        """
+        Create the default permissions for a model.
+        """
+        permissions = [
+            'View',
+            'Edit',
+            'Delete',
+        ]
+
+        for permission in permissions:
+            syntax_json = {
+                'permission_name': permission,
+                'modelschema_id': self.syntax_json['id'],
+                'groups': [],
+                'users': [],
+            }
+
+            ReleaseChange.objects.create(
+                parent_release=self.parent_release,
+                change_type=ReleaseChangeType.CREATE,
+                model_type='permission',
                 syntax_json=syntax_json,
             )

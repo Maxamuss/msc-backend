@@ -13,9 +13,9 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from accounts.models import User
-from accounts.serializers import GroupSerializer, PermissionSerializer, UserSerializer
+from accounts.serializers import GroupSerializer, UserSerializer
 from db.models import ModelSchema
-from syntax.models import Release, ReleaseChange, ReleaseChangeType, ReleaseSyntax
+from syntax.models import Release, ReleaseChange, ReleaseChangeType
 from syntax.serializers import ReleaseChangeSerializer, ReleaseSerializer
 from .mixins import ReleaseMixin, ViewMixin
 
@@ -193,34 +193,8 @@ class DeveloperAPIView(ViewMixin, APIView):
         self._create_release(ReleaseChangeType.DELETE)
         return Response(self._get_response_data(None), status=status.HTTP_200_OK)
 
-    # ---------------------------------------------------------------------------------------------
-    # Util methods
-    # ---------------------------------------------------------------------------------------------
 
-    def _get_response_data(self, data):
-        release_change_count = self.release.release_changes.count()
-
-        response_data = {
-            'release': ReleaseSerializer(self.release).data,
-            'release_change_count': release_change_count,
-            'data': data,
-        }
-
-        return response_data
-
-    def _create_release(self, change_type):
-        release_change = ReleaseChange(
-            parent_release=self.release,
-            change_type=change_type,
-            model_type=self.model_name,
-            syntax_json=self.request.data,
-        )
-        release_change.save(object_id=self.object_id)
-
-        return release_change.syntax_json['id']
-
-
-class UserViewSet(ModelViewSet):
+class UserViewSet(ReleaseMixin, ModelViewSet):
     """
     API viewset to manage user accounts.
     # permission_classes = [IsAccountAdminOrReadOnly]
@@ -256,13 +230,45 @@ class UserViewSet(ModelViewSet):
     @action(detail=True, methods=['get'])
     def permissions(self, request, pk=None):
         user = get_object_or_404(User.objects.all(), pk=pk)
-        permissions = user.user_permissions.order_by('name')
+        user_groups = set(user.groups.all().values_list('id', flat=True))
 
-        serializer = PermissionSerializer(permissions, many=True)
-        return Response(serializer.data)
+        permissions = self.release.get_syntax_definitions('permission')
+        permissions = [
+            permission
+            for permission in permissions
+            if str(user.id) in permission['users']
+            or len(set(permission['groups']).union(user_groups)) > 0
+        ]
+        return Response(permissions)
+
+    @action(detail=True, methods=['post'], url_path='add-permission')
+    def add_permission(self, request, pk=None):
+        user = get_object_or_404(User.objects.all(), pk=pk)
+
+        permission = self.release.get_syntax_definitions(
+            'permission', object_id=request.data.get('permission_id')
+        )
+
+        if str(user.id) not in permission.syntax_json['users']:
+            permission.syntax_json['users'].append(str(user.id))
+
+        return Response({})
+
+    @action(detail=True, methods=['post'], url_path='remove-permission')
+    def remove_permission(self, request, pk=None):
+        user = get_object_or_404(User.objects.all(), pk=pk)
+
+        permission = self.release.get_syntax_definitions(
+            'permission', object_id=request.data.get('permission_id')
+        )
+
+        if str(user.id) not in permission.syntax_json['users']:
+            permission.syntax_json['users'].append(str(user.id))
+
+        return Response({})
 
 
-class GroupViewSet(ModelViewSet):
+class GroupViewSet(ReleaseMixin, ModelViewSet):
     """
     API viewset to manage groups.
     """
@@ -297,10 +303,53 @@ class GroupViewSet(ModelViewSet):
     @action(detail=True, methods=['get'])
     def permissions(self, request, pk=None):
         group = get_object_or_404(Group.objects.all(), pk=pk)
-        permissions = group.permissions.order_by('name')
 
-        serializer = PermissionSerializer(permissions, many=True)
-        return Response(serializer.data)
+        permissions = self.release.get_syntax_definitions('permission')
+        permissions = [
+            permission for permission in permissions if group.id in permission['groups']
+        ]
+
+        return Response(permissions)
+
+    @action(detail=True, methods=['post'], url_path='add-permission')
+    def add_permission(self, request, pk=None):
+        group = get_object_or_404(Group.objects.all(), pk=pk)
+
+        permission = self.release.get_syntax_definitions(
+            'permission', object_id=request.data.get('permission_id')
+        )
+
+        if permission and group.id not in permission['groups']:
+            permission['groups'].append(group.id)
+
+            self._create_release(
+                ReleaseChangeType.UPDATE,
+                model_type='permission',
+                syntax_json=permission,
+                object_id=permission['id'],
+            )
+
+        return Response({})
+
+    @action(detail=True, methods=['post'], url_path='remove-permission')
+    def remove_permission(self, request, pk=None):
+        group = get_object_or_404(Group.objects.all(), pk=pk)
+
+        permission = self.release.get_syntax_definitions(
+            'permission', object_id=request.data.get('permission_id')
+        )
+
+        if permission and group.id in permission['groups']:
+            permission['groups'].pop(group.id)
+
+            self._create_release(
+                ReleaseChangeType.UPDATE,
+                model_type='permission',
+                syntax_json=permission,
+                object_id=permission['id'],
+            )
+
+        return Response({})
 
 
 class ReleaseViewSet(ReleaseMixin, ViewSet):
