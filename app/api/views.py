@@ -98,6 +98,16 @@ class DataAPIView(ViewMixin, APIView):
 
         return Response(serializer.data)
 
+    def destroy(self):
+        resource = get_object_or_404(self.get_queryset(), id=self.object_id)
+
+        if self.request.method.lower() == 'get':
+            serializer = self.get_serializer(resource)
+            return Response(serializer.data)
+        else:
+            resource.delete()
+            return Response({})
+
     # ---------------------------------------------------------------------------------------------
     # Util methods
     # ---------------------------------------------------------------------------------------------

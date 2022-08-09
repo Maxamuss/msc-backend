@@ -159,25 +159,33 @@ class Release(MPTTModel):
         """
 
         def get_class_name(field_type):
-            if field_type == 'float':
-                return 'django.db.models.FloatField'
-            elif field_type == 'datetime':
-                return 'django.db.models.DateTimeField'
-            elif field_type == 'fk':
-                return 'django.db.models.ForeignKey'
-            else:
-                return 'django.db.models.TextField'
+            fields = {
+                'text': 'django.db.models.TextField',
+                'email': 'django.db.models.EmailField',
+                'float': 'django.db.models.FloatField',
+                'date': 'django.db.models.DateField',
+                'datetime': 'django.db.models.DateTimeField',
+                'fk': 'django.db.models.ForeignKey',
+            }
+            return fields.get(field_type, fields['text'])
 
         def get_kwargs(field):
-            if field['field_type'] == 'fk':
+            field_type = field['field_type']
+            required = field['required']
+
+            if field_type == 'fk':
                 return {
                     'on_delete': models.CASCADE,
                     'to': ModelSchema.objects.get(id=field["modelschema_id"]).name,
-                    'null': not field['required'],
+                    'null': not required,
                 }
-            else:
+            elif field_type in ['float', 'datetime', 'date']:
                 return {
-                    'null': not field['required'],
+                    'null': not required,
+                }
+            elif field_type in ['text', 'email']:
+                return {
+                    'blank': True,
                 }
 
         def create_field(model_schema, field):

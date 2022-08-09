@@ -42,6 +42,12 @@ EDIT_PAGE_LAYOUT = [
         'component': 'core@Header',
         'config': {
             'title': 'Edit <MODEL_NAME>',
+            'tools': [
+                {
+                    'text': 'Delete <MODEL_NAME>',
+                    'to': '<MODEL_NAME_LOWER>/<OBJECT_ID>/delete',
+                }
+            ],
         },
     },
     {
@@ -51,4 +57,25 @@ EDIT_PAGE_LAYOUT = [
         },
     },
 ]
-DELETE_PAGE_LAYOUT = []
+DELETE_PAGE_LAYOUT = [
+    {
+        'component': 'core@Header',
+        'config': {
+            'title': 'Delete <MODEL_NAME>',
+            'tools': [
+                {
+                    'text': 'Go Back',
+                    'to': '<MODEL_NAME_LOWER>/<OBJECT_ID>',
+                }
+            ],
+        },
+    },
+    {
+        'component': 'core@Form',
+        'config': {
+            'method': 'DELETE',
+            'to': '<MODEL_NAME_LOWER>',
+            'submit_button_text': 'Confirm Delete',
+        },
+    },
+]
