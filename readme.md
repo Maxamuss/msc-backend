@@ -1,43 +1,18 @@
-# Linting
+# Running the backend
+
+1. Create and run the docker containers:
 
 ```bash
-black -S app/ && isort app/
+docker-compose up -d --build
 ```
 
-# API
-
-1. Authenticate user
-2. Get resource
-3. Get resource data request type
-4. Check user has resource permissions
-
-# Models
-
-Dynamic models heavily inspired by [django-dynamic-models](https://github.com/rvinzent/django-dynamic-models)
-
-# TODO
-
+2. Initalise data
 ```
-# Models
- - Add field with a few types
- - Edit pages with few components
- - Create a workflow with a few triggers and actions
- - Set permissions for each page
-
-# Function
- - Create function
- - Add code that will be run
-
-# Workflows
- - View and edit
-
-# Groups
- - Groups can be added
- - View users
-
-# Permissions
- - View all permissions
-
-# Version Control
- - Change the branch viewing on
+docker-compose exec web python manage.py initialise
 ```
+
+3. If prompted to login use: 
+email: admin@email.com
+password: superuser
+
+4. Make sure frontend is running: https://github.com/Maxamuss/msc-frontend/
